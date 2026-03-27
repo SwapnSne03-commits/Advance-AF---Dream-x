@@ -889,10 +889,18 @@ def get_readable_time(seconds):
     return ' '.join(result)  
 
 def generate_season_variations(search_raw: str, season_number: int):
+    s = str(season_number)
+    s2 = str(season_number).zfill(2)
+
     return [
-        f"{search_raw} s{season_number:02}",
-        f"{search_raw} season {season_number}",
-        f"{search_raw} season {season_number:02}",
+        f"{search_raw} S{s}",
+        f"{search_raw} S{s2}",
+        f"{search_raw} s{s}",
+        f"{search_raw} s{s2}",
+        f"{search_raw} Season {s}",
+        f"{search_raw} Season {s2}",
+        f"{search_raw} season {s}",
+        f"{search_raw} season {s2}",
     ]
 
 
