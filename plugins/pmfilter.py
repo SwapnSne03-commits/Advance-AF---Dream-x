@@ -36,7 +36,7 @@ BUTTONS0 = {}
 BUTTONS1 = {}
 BUTTONS2 = {}
 SPELL_CHECK = {}
-
+temp.IMDB_CAP.clear()
 
 @Client.on_message(filters.group & filters.text & filters.incoming & ~filters.regex(r"^/") )
 async def give_filter(client, message):
@@ -1838,8 +1838,8 @@ async def auto_filter(client, msg, spoll=False):
         remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
         TEMPLATE = script.IMDB_TEMPLATE_TXT
         settings = await get_settings(message.chat.id)
-        if settings.get('template'):
-            TEMPLATE = settings['template']
+        #if settings.get('template'):
+            #TEMPLATE = settings['template']
         imdb = imdb or tmdb
         if imdb:
             cap = TEMPLATE.format(
@@ -1873,7 +1873,7 @@ async def auto_filter(client, msg, spoll=False):
                 url=imdb['url'],
                 **locals()
             )
-            temp.IMDB_CAP[message.from_user.id] = cap
+            #temp.IMDB_CAP[message.from_user.id] = cap
             if not settings.get('button'):
                 cap += "\n\n<b><u>Your Requested Files Are Here</u></b>\n\n"
                 for idx, file in enumerate(files, start=1):
