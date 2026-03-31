@@ -33,7 +33,7 @@ IGNORE_WORDS = {
     "mar", "marathi", "guj", "gujarati", "urd", "urdu", "kor", "korean", "jpn", 
     "japanese", "nf", "netflix", "sonyliv", "sony", "sliv", "amzn", "prime", 
     "primevideo", "hotstar", "zee5", "jio", "jhs", "aha", "hbo", "paramount", 
-    "apple", "hoichoi", "sunnxt", "viki", "tg", "movies", "tgmovies"
+    "apple", "hoichoi", "sunnxt", "viki", "tg", "movies", "tgmovies", "x264", "h265", "h264", "x265"
 }|BAD_WORDS
 
 # Constants
@@ -108,13 +108,13 @@ def normalize(s: str) -> str:
 
 def remove_ignored_words(text: str) -> str:
     words = text.split()
-    cleaned = []
 
-    for w in words:
-        if w.lower() not in IGNORE_WORDS:
-            cleaned.append(w)
+    cleaned_words = []
+    for word in words:
+        if word.lower() not in IGNORE_WORDS:
+            cleaned_words.append(word)
 
-    return " ".join(cleaned)
+    return " ".join(cleaned_words)
 
 def get_qualities(text: str) -> str:
     qualities = QUALITY_PATTERN.findall(text)
@@ -229,6 +229,9 @@ def extract_media_info(filename: str, caption: str):
                     base_raw = processed_raw
 
     base_name = normalize(remove_ignored_words(normalize(base_raw)))
+    base_name = re.sub(r'\b\d+bit\b', '', base_name, flags=re.IGNORECASE)
+    base_name = re.sub(r'\bx26[45]\b', '', base_name, flags=re.IGNORECASE)
+    base_name = re.sub(r'\s+', ' ', base_name).strip()
     if year and year not in base_name:
         base_name += f" {year}"
 
