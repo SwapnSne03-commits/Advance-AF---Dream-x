@@ -71,7 +71,7 @@ STANDARD_GENRES = {
 
 # Precompiled regex patterns
 CLEAN_PATTERN = re.compile(r'@[^ \n\r\t\.,:;!?()\[\]{}<>\\/"\'=_%]+|\bwww\.[^\s\]\)]+|\([\@^]+\)|\[[\@^]+\]')
-NORMALIZE_PATTERN = re.compile(r"[._]+|[()\[\]{}:;'–!,.?_]")
+NORMALIZE_PATTERN = re.compile(r"[._]+|[()\[\]{}:;–!,.?_]")
 QUALITY_PATTERN = re.compile(
     r"\b(?:360p|480p|720p|1080p|2160p|4K|1440p|540p|240p|140p)\b",
     re.IGNORECASE
@@ -107,13 +107,14 @@ def normalize(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 def remove_ignored_words(text: str) -> str:
-    text = text.lower()
+    words = text.split()
+    cleaned = []
 
-    for word in IGNORE_WORDS:
-        text = text.replace(word.lower(), "")
+    for w in words:
+        if w.lower() not in IGNORE_WORDS:
+            cleaned.append(w)
 
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
+    return " ".join(cleaned)
 
 def get_qualities(text: str) -> str:
     qualities = QUALITY_PATTERN.findall(text)
@@ -122,6 +123,9 @@ def get_qualities(text: str) -> str:
 def get_format(text: str) -> str:
     match = FORMAT_PATTERN.findall(text)
     return match[0].upper() if match else "N/A"
+
+def smart_title(text):
+    return " ".join(word.capitalize() for word in text.split())
 
 def extract_ott_platform(text: str) -> str:
     text = text.lower()
@@ -268,6 +272,7 @@ def extract_media_info(filename: str, caption: str):
     # If stripping accidentally removed everything, fall back to a safer value
     if not base_name:
         base_name = normalize(remove_ignored_words(normalize(processed_raw))) or filename
+    base_name = smart_title(base_name)
 
     return {
         "processed": normalize(processed_raw),
@@ -331,6 +336,8 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
         "processed": processed,
         "quality": media_info["quality"],
         "language": media_info["language"],
+        "format": media_info.get("format"),           # ✅ ADD THIS
+        "is_combined": media_info.get("is_combined"), # ✅ ADD THIS
         "ott_platform": media_info["ott_platform"],
         "timestamp": datetime.now(),
         "tag": media_info["tag"],
@@ -541,7 +548,7 @@ def generate_movie_message(movie_doc, base_name):
 
         # 🔥 Season-wise grouping
         season = file.get("season")
-        if season:
+        if season is not None:
             if season not in season_data:
                 season_data[season] = {
                     "episodes": set(),
@@ -580,8 +587,7 @@ def generate_movie_message(movie_doc, base_name):
     epi_block = ""
 
     if primary_tag == "#SERIES" and season_data:
-        sorted_seasons = sorted(season_data.keys())
-
+        sorted_seasons = sorted(season_data.keys(), key=int)
         # Season range
         if len(sorted_seasons) == 1:
             season_str = f"{sorted_seasons[0]:02}"
