@@ -233,15 +233,18 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
 
     
     MOVIE_UPDATE_NOTIFY_TXT = """
-</b><a href={poster_url}>📥</a><a href={imdb_url}>New {tag} Added</a></b>
+<b><a href="{poster_url}">📥</a> <a href="{imdb_url}">New {tag} Added</a></b>
 
-<blockquote>✨ ᴛɪᴛʟᴇ : <code>{filename}</code>
+<blockquote>
+🏷️ <b>Tɪᴛʟᴇ :</b> <code>{filename}</code>
 
-🎭 ɢᴇɴʀᴇs : <b>{genres}</b>
-📺 ᴏᴛᴛ        : <b>{ott}</b>
-🎞️ ǫᴜᴀʟɪᴛʏ : <b>{quality}</b>
-🎧 ᴀᴜᴅɪᴏ    : <b>{language}</b>
-🔥 ʀᴀᴛɪɴɢ   : <b>{rating}</b>
+🎭 <b>Gᴇɴʀᴇs :</b> {genres}
+📺 <b>OTT :</b> {ott}
+
+📌 <b>Fᴏʀᴍᴀᴛ :</b> {format}
+🌿 <b>Qᴜᴀʟɪᴛʏ :</b> {quality}
+🔉 <b>Aᴜᴅɪᴏ :</b> {language}
+
 {episodes}
 </blockquote>
 
