@@ -132,9 +132,16 @@ def extract_ott_platform(text: str) -> str:
     platforms = {plat for key, plat in OTT_PLATFORMS.items() if key in text}
     return " | ".join(platforms) if platforms else "N/A"
 
-def extract_season_episode(filename: str) -> Tuple[Optional[int], Optional[str]]:
+def extract_season_episode(filename: str):
+    # 🔥 Season detect (even without episode)
+    season_match = re.search(r'\bS(?:eason)?\s*0*(\d{1,2})\b', filename, re.IGNORECASE)
+    season = int(season_match.group(1)) if season_match else None
+
+    # Episode range (EP 01-05)
     if m := EP_ONLY_RANGE.search(filename):
-        return 1, f"{int(m.group(1))}-{int(m.group(2))}"
+        return season or 1, f"{int(m.group(1))}-{int(m.group(2))}"
+
+    # Other patterns
     for pattern in (RANGE_REGEX, SINGLE_REGEX, NAMED_REGEX):
         if m := pattern.search(filename):
             season = int(m.group(1))
@@ -143,7 +150,9 @@ def extract_season_episode(filename: str) -> Tuple[Optional[int], Optional[str]]
             else:
                 ep = m.group(2)
             return season, ep
-    return None, None
+
+    # 🔥 IMPORTANT: season return even if no episode
+    return season, None
 
 def schedule_update(bot, base_name, delay=5):
     if handle := pending_updates.get(base_name):
@@ -181,9 +190,14 @@ def extract_media_info(filename: str, caption: str):
     "complete", "full", "batch"
     ]
 
-    text_check = f"{filename.lower()} {caption_clean}"
+    import unicodedata
 
-    if any(word in text_check for word in combined_keywords):
+    def clean_text(s):
+        return unicodedata.normalize("NFKD", s).lower()
+
+    text_check = clean_text(f"{filename} {caption_clean}")
+
+    if re.search(r'\b(combined|complete|full|batch|pack)\b', text_check):
         is_combined = True
     if season is not None:
         tag = "#SERIES"
@@ -222,7 +236,7 @@ def extract_media_info(filename: str, caption: str):
         base_name = re.sub(r"\s+\(\d{4}\)$", "", base_name)
         if year:
             base_name += f" {year}"
-
+    print("DEBUG:", text_check, is_combined, season, episode)
     # -------------------------
     # NEW: strip season/episode tokens from final base_name
     # -------------------------
@@ -570,8 +584,8 @@ def generate_movie_message(movie_doc, base_name):
                     except:
                         pass
 
-            # Combined
-            if file.get("is_combined"):
+            #Combined
+            if file.get("is_combined") is True:
                 season_data[season]["combined"] = True
 
     # Tag
