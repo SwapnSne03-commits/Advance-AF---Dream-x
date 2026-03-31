@@ -73,9 +73,7 @@ STANDARD_GENRES = {
 CLEAN_PATTERN = re.compile(r'@[^ \n\r\t\.,:;!?()\[\]{}<>\\/"\'=_%]+|\bwww\.[^\s\]\)]+|\([\@^]+\)|\[[\@^]+\]')
 NORMALIZE_PATTERN = re.compile(r"[._]+|[()\[\]{}:;'–!,.?_]")
 QUALITY_PATTERN = re.compile(
-    r"\b(?:HDCam|HDTC|CamRip|TS|TC|TeleSync|DVDScr|DVDRip|PreDVD|"
-    r"WEBRip|WEB-DL|TVRip|HDTV|WEB DL|WebDl|BluRay|BRRip|BDRip|"
-    r"360p|480p|720p|1080p|2160p|4K|1440p|540p|240p|140p|HEVC|HDRip)\b", 
+    r"\b(?:360p|480p|720p|1080p|2160p|4K|1440p|540p|240p|140p)\b",
     re.IGNORECASE
 )
 FORMAT_PATTERN = re.compile(
@@ -162,7 +160,9 @@ def extract_media_info(filename: str, caption: str):
     tag = "#MOVIE"
     processed_raw = base_raw = filename
     quality = get_qualities(caption_clean) or get_qualities(filename.lower()) or "N/A"
-    format_type = get_format(caption_clean) or get_format(filename.lower())
+    format_type = get_format(caption_clean)
+    if format_type == "N/A":
+        format_type = get_format(filename.lower())
     ott_platform = extract_ott_platform(f"{filename} {caption_clean}")
 
     lang_keys = {k for k in CAPTION_LANGUAGES if k in caption_clean or k in filename.lower()}
@@ -172,8 +172,9 @@ def extract_media_info(filename: str, caption: str):
     is_combined = False
 
     combined_keywords = [
-        "combined", "full series", "complete series",
-        "all episodes", "season complete", "full season"
+    "combined", "full series", "complete series",
+    "all episodes", "season complete", "full season",
+    "complete", "full", "batch"
     ]
 
     text_check = f"{filename.lower()} {caption_clean}"
@@ -602,11 +603,11 @@ def generate_movie_message(movie_doc, base_name):
             else:
                 ep_str = ""
 
-            if combined and not ep_str:
-                ep_str = "COMBINED"
-            elif combined and ep_str:
-                ep_str = f"{ep_str}, COMBINED"
-
+            if combined:
+                if ep_str:
+                    ep_str = f"{ep_str}, COMBINED"
+                else:
+                    ep_str = "COMBINED"
             episode_lines.append(f"S{s} : {ep_str if ep_str else 'COMBINED'}")
 
         epi_block = f"""
