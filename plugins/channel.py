@@ -78,6 +78,10 @@ QUALITY_PATTERN = re.compile(
     r"360p|480p|720p|1080p|2160p|4K|1440p|540p|240p|140p|HEVC|HDRip)\b", 
     re.IGNORECASE
 )
+FORMAT_PATTERN = re.compile(
+    r"\b(?:WEB-DL|WEBRip|BluRay|HDRip|DVDRip|HDTV|CAM|HDCAM|HDTS)\b",
+    re.IGNORECASE
+)
 YEAR_PATTERN = re.compile(r"(?<![A-Za-z0-9])(?:19|20)\d{2}(?![A-Za-z0-9])")
 RANGE_REGEX = re.compile(r'\bS(\d{1,2})[^\w\n\r]*E(?:p(?:isode)?)?0*(\d{1,2})\s*(?:to|-)\s*(?:E(?:p(?:isode)?)?)?0*(\d{1,2})',re.IGNORECASE)
 SINGLE_REGEX = re.compile(r'\bS(\d{1,2})[^\w\n\r]*E(?:p(?:isode)?)?0*(\d{1,3})', re.IGNORECASE)
@@ -117,6 +121,10 @@ def get_qualities(text: str) -> str:
     qualities = QUALITY_PATTERN.findall(text)
     return ", ".join(qualities) if qualities else "N/A"
 
+def get_format(text: str) -> str:
+    match = FORMAT_PATTERN.findall(text)
+    return match[0].upper() if match else "N/A"
+
 def extract_ott_platform(text: str) -> str:
     text = text.lower()
     platforms = {plat for key, plat in OTT_PLATFORMS.items() if key in text}
@@ -154,12 +162,24 @@ def extract_media_info(filename: str, caption: str):
     tag = "#MOVIE"
     processed_raw = base_raw = filename
     quality = get_qualities(caption_clean) or get_qualities(filename.lower()) or "N/A"
+    format_type = get_format(caption_clean) or get_format(filename.lower())
     ott_platform = extract_ott_platform(f"{filename} {caption_clean}")
 
     lang_keys = {k for k in CAPTION_LANGUAGES if k in caption_clean or k in filename.lower()}
     language = ", ".join(sorted({CAPTION_LANGUAGES[k] for k in lang_keys})) if lang_keys else "N/A"
 
     season, episode = extract_season_episode(filename)
+    is_combined = False
+
+    combined_keywords = [
+        "combined", "full series", "complete series",
+        "all episodes", "season complete", "full season"
+    ]
+
+    text_check = f"{filename.lower()} {caption_clean}"
+
+    if any(word in text_check for word in combined_keywords):
+        is_combined = True
     if season is not None:
         tag = "#SERIES"
         if m := (RANGE_REGEX.search(filename) or SINGLE_REGEX.search(filename) or NAMED_REGEX.search(filename) or EP_ONLY_RANGE.search(filename)):
@@ -257,6 +277,8 @@ def extract_media_info(filename: str, caption: str):
         "year": year,
         "quality": quality,
         "ott_platform": ott_platform,
+        "format": format_type,
+        "is_combined": is_combined,
         "language": language
     }
 
@@ -485,69 +507,117 @@ async def update_movie_message(bot, base_name):
         logger.error(f"Failed to update movie message for {base_name}: {e}")
 
 def generate_movie_message(movie_doc, base_name):
+    all_formats = set()
     all_qualities = set()
     all_languages = set()
     all_ott_platforms = set()
     all_tags = set()
-    episodes_by_season = defaultdict(set)
+
+    # 🔥 Season ভিত্তিক data
+    season_data = {}
 
     for file in movie_doc["files"]:
+        # Quality
         if file["quality"] != "N/A":
             all_qualities.update(q.strip() for q in file["quality"].split(",") if q.strip())
+
+        # Language
         if file["language"] != "N/A":
             all_languages.update(l.strip() for l in file["language"].split(",") if l.strip())
+
+        # OTT
         if file["ott_platform"] != "N/A":
             platforms = [p.strip() for p in file["ott_platform"].split("|") if p.strip()]
             all_ott_platforms.update(platforms)
+
+        # Tag
         if file["tag"]:
             all_tags.add(file["tag"])
-        if file.get("season") and file.get("episode"):
-            season = file["season"]
-            episode = file["episode"]
-            episodes_by_season[season].add(episode)
 
-    primary_tag = "#SERIES" if "#SERIES" in all_tags else "#MOVIE"
-    epi_block = ""
-    if episodes_by_season:
-        episode_lines = []
-        for season, episodes in sorted(episodes_by_season.items(), key=lambda x: int(x[0])):
-            singles = []
-            ranges = []
+        # Format
+        if file.get("format") and file["format"] != "N/A":
+            all_formats.add(file["format"])
 
-            for ep in episodes:
+        # 🔥 Season-wise grouping
+        season = file.get("season")
+        if season:
+            if season not in season_data:
+                season_data[season] = {
+                    "episodes": set(),
+                    "combined": False
+                }
+
+            # Episode
+            if file.get("episode"):
+                ep = file["episode"]
                 if "-" in ep:
-                    ranges.append(ep)
+                    try:
+                        start, end = map(int, ep.split("-"))
+                        season_data[season]["episodes"].update(range(start, end + 1))
+                    except:
+                        pass
                 else:
                     try:
-                        singles.append(int(ep))
-                    except ValueError:
-                        ranges.append(ep)
+                        season_data[season]["episodes"].add(int(ep))
+                    except:
+                        pass
 
-            singles.sort()
-            collapsed = []
-            start = end = None
-            for num in singles:
-                if start is None:
-                    start = end = num
-                elif num == end + 1:
-                    end = num
-                else:
-                    collapsed.append(str(start) if start == end else f"{start}-{end}")
-                    start = end = num
-            if start is not None:
-                collapsed.append(str(start) if start == end else f"{start}-{end}")
+            # Combined
+            if file.get("is_combined"):
+                season_data[season]["combined"] = True
 
-            all_ep_parts = collapsed + sorted(ranges, key=lambda s: int(s.split("-")[0]))
-            episode_lines.append(f"S{int(season)}: {', '.join(all_ep_parts)}")
+    # Tag
+    primary_tag = "#SERIES" if "#SERIES" in all_tags else "#MOVIE"
 
-        epi_str = "\n".join(episode_lines)
-        if epi_str:
-            epi_block = f"📺 ᴇᴘɪsᴏᴅᴇs : <b>\n{epi_str}</b>"
-
-    genres = movie_doc.get("genres", "N/A")
+    # Format/Quality/Language
+    format_str = ", ".join(sorted(all_formats)) if all_formats else "N/A"
     quality_str = ", ".join(sorted(all_qualities)) if all_qualities else "N/A"
     language_str = ", ".join(sorted(all_languages)) if all_languages else "N/A"
     ott_str = ", ".join(sorted(all_ott_platforms)) if all_ott_platforms else "N/A"
+
+    # 🔥 MULTI-SEASON LOGIC
+    epi_block = ""
+
+    if primary_tag == "#SERIES" and season_data:
+        sorted_seasons = sorted(season_data.keys())
+
+        # Season range
+        if len(sorted_seasons) == 1:
+            season_str = f"{sorted_seasons[0]:02}"
+        else:
+            season_str = f"{sorted_seasons[0]:02}-{sorted_seasons[-1]:02}"
+
+        # Episode lines
+        episode_lines = []
+
+        for s in sorted_seasons:
+            data = season_data[s]
+            eps = data["episodes"]
+            combined = data["combined"]
+
+            if eps:
+                sorted_eps = sorted(eps)
+                start, end = sorted_eps[0], sorted_eps[-1]
+                ep_str = f"{start}-{end}"
+            else:
+                ep_str = ""
+
+            if combined and not ep_str:
+                ep_str = "COMBINED"
+            elif combined and ep_str:
+                ep_str = f"{ep_str}, COMBINED"
+
+            episode_lines.append(f"S{s} : {ep_str if ep_str else 'COMBINED'}")
+
+        epi_block = f"""
+
+🔅 Sᴇᴀsᴏɴ : {season_str}
+🔹 Eᴘɪsᴏᴅᴇs :
+{chr(10).join(episode_lines)}
+"""
+
+    # Genres
+    genres = movie_doc.get("genres", "N/A")
 
     return script.MOVIE_UPDATE_NOTIFY_TXT.format(
         poster_url=movie_doc.get("poster_url", ""),
@@ -556,6 +626,7 @@ def generate_movie_message(movie_doc, base_name):
         tag=primary_tag,
         genres=genres,
         ott=ott_str,
+        format=format_str,
         quality=quality_str,
         language=language_str,
         episodes=epi_block,
