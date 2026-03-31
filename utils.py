@@ -446,8 +446,11 @@ async def get_posterx(query, bulk=False, id=False, file=None):
         details = await get_movie_detailsx(query, id=True)
 
     if not details or details.get("error"):
-        return None
-    
+        try:
+            return await get_poster(query, bulk=bulk, id=id, file=file)
+        except Exception:
+            return None
+
     plot = ""
     if not LONG_IMDB_DESCRIPTION:
         plot = details.get('plot')
@@ -465,9 +468,19 @@ async def get_posterx(query, bulk=False, id=False, file=None):
             return ", ".join(str(x) for x in val if x)
         return str(val) if val else ""
 
+    poster_url = details.get('poster_url')
+    backdrop_url = details.get('backdrop_url')
+
+    # Toggle logic
+    if USE_LANDSCAPE_POSTER:
+        final_poster = backdrop_url if backdrop_url else poster_url
+    else:
+        final_poster = poster_url if poster_url else backdrop_url
     return {
         'title': details.get('title'),
         'votes': details.get('votes'),
+        'poster': final_poster,
+        'backdrop': backdrop_url,
         "aka": None,  # Not typically provided by TMDB in this format
         "seasons": details.get('seasons'),
         "box_office": details.get('box_office'),
