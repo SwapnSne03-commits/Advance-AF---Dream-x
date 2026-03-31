@@ -93,7 +93,7 @@ ABOVE_PREVIEW = bool(environ.get('ABOVE_PREVIEW', True)) # Shows link preview ab
 TMDB_API_KEY = environ.get('TMDB_API_KEY', '') # preffer to use your own tmdb API Key get it from https://www.themoviedb.org/settings/api
 TMDB_POSTER = bool(environ.get('TMDB_POSTER', True)) # Shows TMDB poster in notification msg
 LANDSCAPE_POSTER = bool(environ.get('LANDSCAPE_POSTER', False)) # Show landscape poster in notification msg
-
+USE_LANDSCAPE_POSTER = os.environ.get("USE_LANDSCAPE_POSTER", "True").lower() == "true" #Show Landscape/Potrait Poster in search 
 # ============================
 # Verification Settings
 # ============================
