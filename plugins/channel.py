@@ -1,5 +1,6 @@
 import re
 import logging
+import unicodedata
 import asyncio
 from datetime import datetime
 from collections import defaultdict
@@ -32,7 +33,7 @@ IGNORE_WORDS = {
     "mar", "marathi", "guj", "gujarati", "urd", "urdu", "kor", "korean", "jpn", 
     "japanese", "nf", "netflix", "sonyliv", "sony", "sliv", "amzn", "prime", 
     "primevideo", "hotstar", "zee5", "jio", "jhs", "aha", "hbo", "paramount", 
-    "apple", "hoichoi", "sunnxt", "viki"
+    "apple", "hoichoi", "sunnxt", "viki", "tg", "movies", "tgmovies"
 }|BAD_WORDS
 
 # Constants
@@ -93,12 +94,24 @@ def clean_mentions_links(text: str) -> str:
     return CLEAN_PATTERN.sub("", text or "").strip()
 
 def normalize(s: str) -> str:
+    if not s:
+        return ""
+
+    # 🔥 Unicode normalize (𝐓𝐆 → TG)
+    s = unicodedata.normalize("NFKD", s)
+
+    # existing logic
     s = NORMALIZE_PATTERN.sub(" ", s)
     return re.sub(r"\s+", " ", s).strip()
 
 def remove_ignored_words(text: str) -> str:
-    IGNORE_WORDS_LOWER = {w.lower() for w in IGNORE_WORDS}
-    return " ".join(word for word in text.split() if word.lower() not in IGNORE_WORDS_LOWER)
+    text = text.lower()
+
+    for word in IGNORE_WORDS:
+        text = text.replace(word.lower(), "")
+
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 def get_qualities(text: str) -> str:
     qualities = QUALITY_PATTERN.findall(text)
@@ -133,7 +146,7 @@ def schedule_update(bot, base_name, delay=5):
         lambda: asyncio.create_task(update_movie_message(bot, base_name))
     )
 def extract_media_info(filename: str, caption: str):
-    filename = normalize(clean_mentions_links(filename).title())
+    filename = normalize(clean_mentions_links(filename))
     caption_clean = clean_mentions_links(caption).lower() if caption else ""
     unified = f"{caption_clean} {filename.lower()}".strip()
 
