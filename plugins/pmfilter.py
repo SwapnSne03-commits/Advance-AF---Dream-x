@@ -1826,9 +1826,11 @@ async def auto_filter(client, msg, spoll=False):
                 text="↭ ɴᴏ ᴍᴏʀᴇ ᴘᴀɢᴇꜱ ᴀᴠᴀɪʟᴀʙʟᴇ ↭", callback_data="pages")])
 
         if settings.get('imdb'):
-            imdb = await get_posterx(search, file=(files[0]).file_name) if TMDB_POSTER else await get_poster(search, file=(files[0]).file_name)
+            imdb = await get_poster(search, file=(files[0]).file_name)   # IMDb first
+            tmdb = await get_posterx(search, file=(files[0]).file_name)  # TMDB fallback
         else:
             imdb = None
+            tmdb = None
         cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
         time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - \
             timedelta(hours=curr_time.hour, minutes=curr_time.minute,
@@ -1838,6 +1840,7 @@ async def auto_filter(client, msg, spoll=False):
         settings = await get_settings(message.chat.id)
         if settings.get('template'):
             TEMPLATE = settings['template']
+        imdb = imdb or tmdb
         if imdb:
             cap = TEMPLATE.format(
                 query=search,
@@ -1894,21 +1897,37 @@ async def auto_filter(client, msg, spoll=False):
                         cap += f"<b>\n{idx}. <a href='https://telegram.me/{temp.U_NAME}?start=file_{message.chat.id}_{file.file_id}'>[{get_size(file.file_size)}] {clean_filename(file.file_name)}\n</a></b>"
         sent = None
         try:
-            if imdb and imdb.get('poster'):
+            poster_imdb = imdb.get('poster') if imdb else None
+            poster_tmdb = tmdb.get('poster') if tmdb else None
+            backdrop_tmdb = tmdb.get('backdrop') if tmdb else None
+
+            # Final priority
+            photo = poster_imdb or poster_tmdb or backdrop_tmdb
+            if photo:
                 try:
-                    if TMDB_POSTER:
-                        photo = imdb.get('backdrop') if imdb.get('backdrop') and LANDSCAPE_POSTER else imdb.get('poster')
-                    else:
-                        photo = imdb.get('poster')
                     sent = await message.reply_photo(photo=photo, caption=cap, reply_markup=InlineKeyboardMarkup(btn), parse_mode=enums.ParseMode.HTML)
                     if m:
                         await m.delete()
                 except (MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty):
-                    pic = imdb.get('poster')
-                    poster = pic.replace('.jpg', "._V1_UX360.jpg")
-                    sent = await message.reply_photo(photo=poster, caption=cap, reply_markup=InlineKeyboardMarkup(btn), parse_mode=enums.ParseMode.HTML)
-                    if m:
-                        await m.delete()
+                    pic = poster_imdb or poster_tmdb
+
+                    if pic:
+                        poster = pic.replace('.jpg', "._V1_UX360.jpg") if '.jpg' in pic else pic
+                        sent = await message.reply_photo(
+                            photo=poster,
+                            caption=cap,
+                            reply_markup=InlineKeyboardMarkup(btn),
+                            parse_mode=enums.ParseMode.HTML
+                        )
+                        if m:
+                            await m.delete()
+                    else:
+                        sent = await message.reply_text(
+                            text=cap,
+                            reply_markup=InlineKeyboardMarkup(btn),
+                            disable_web_page_preview=True,
+                            parse_mode=enums.ParseMode.HTML
+                        )
                 except Exception as e:
                     logger.exception(e)
                     sent = await message.reply_text(text=cap, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=True, parse_mode=enums.ParseMode.HTML)
