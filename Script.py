@@ -249,14 +249,14 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
 """
 
 
-    IMDB_TEMPLATE_TXT = """<b><a href={url}>{title} (<a href={url}/releaseinfo>{year}</a>)
+    IMDB_TEMPLATE_TXT = """🏷 <b>ᴛɪᴛʟᴇ: <a href="{url}">{title}</a></b>
+🎭 <b>ɢᴇɴʀᴇs: {genres}</b>
+📆 <b>ʏᴇᴀʀ: <a href="{url}/releaseinfo">{year}</a></b>
+🎖 <b>ʀᴀᴛɪɴɢ: <a href="{url}/ratings">{rating}</a> / 10 (ʙᴀsᴇᴅ ᴏɴ {votes} ᴜsᴇʀs ʀᴀᴛɪɴɢs.)</b>
+📀 <b>ʀᴜɴᴛɪᴍᴇ: {runtime} ᴍɪɴᴜᴛᴇs</b>
 
-ʀᴀᴛɪɴɢ : <a href={url}/ratings>{rating}</a>
-ɢᴇɴʀᴇ : {genres}
-ᴀᴜᴅɪᴏ : {languages}
-
-sʜᴏᴡɴ ɪɴ : {remaining_seconds} <i>sᴇᴄ</i>⚡️
-<b>ʀᴇǫ ʙʏ : {message.from_user.mention}</b>"""
+⏰ <b>ʀᴇsᴜʟᴛ sʜᴏᴡɴ ɪɴ: {remaining_seconds} <i>sᴇᴄᴏɴᴅs</i></b>
+🕵️‍♂️ <b>ʀᴇǫᴜᴇsᴛᴇᴅ ʙʏ: {message.from_user.mention}</b>"""
 
     LOGO = r"""
     ██████╗░██████╗░███████╗░█████╗░███╗░░░███╗██╗░░██╗██████╗░░█████╗░████████╗███████╗
