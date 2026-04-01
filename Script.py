@@ -229,7 +229,7 @@ Nᴀᴍᴇ : {}
 
 Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
     
-    CAPTION = """<b><a href="https://t.me/Graduate_Movies">{file_name}</a></b>\n\n<b>⚜️ Powered By : <a href="https://t.me/Graduate_Movies">Graduate Movies</a></b>"""
+    CAPTION = """<b>{file_caption}\n\n━━━━━━━━━━━━━━\n🎭 Cinema Zone ➤\n@Graduate_Movies | @Graduate_Request | @Graduate_Request_Pro\n━━━━━━━━━━━━━━</b>"""
 
     
     MOVIE_UPDATE_NOTIFY_TXT = """
