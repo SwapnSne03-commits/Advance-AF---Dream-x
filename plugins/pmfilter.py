@@ -38,6 +38,55 @@ BUTTONS2 = {}
 SPELL_CHECK = {}
 temp.IMDB_CAP.clear()
 
+def generate_search_variants(query: str):
+    if not query:
+        return []
+
+    raw = query.lower()
+
+    variants = []
+
+    # 1️⃣ remove symbols completely
+    v1 = re.sub(r"[^\w\s]", "", raw)
+
+    # 2️⃣ replace symbols with space
+    v2 = re.sub(r"[^\w\s]", " ", raw)
+
+    # 3️⃣ special handling (hyphen / underscore)
+    v3 = raw.replace("-", " ").replace("_", " ")
+
+    # clean সবগুলো
+    for v in [v1, v2, v3]:
+        v = re.sub(r"\s+", " ", v).strip()
+        if v and v != raw:
+            variants.append(v)
+
+    # duplicate remove
+    return list(dict.fromkeys(variants))
+
+async def symbol_fallback_search(chat_id, search):
+    # 1️⃣ original search
+    files, offset, total = await get_search_results(
+        chat_id, search, offset=0, filter=True
+    )
+
+    if files:
+        return files, offset, total, search
+
+    # 2️⃣ fallback variants
+    variants = generate_search_variants(search)
+
+    for v in variants:
+        files, offset, total = await get_search_results(
+            chat_id, v, offset=0, filter=True
+        )
+
+        if files:
+            return files, offset, total, v
+
+    # ❌ nothing found
+    return [], 0, 0, search
+
 @Client.on_message(filters.group & filters.text & filters.incoming & ~filters.regex(r"^/") )
 async def give_filter(client, message):
     if EMOJI_MODE:
@@ -1800,7 +1849,10 @@ async def auto_filter(client, msg, spoll=False):
                 search = search.replace("-", " ")
                 search = re.sub(r"[:']", "", search)
                 search = re.sub(r"\s+", " ", search).strip()
-                files, offset, total_results = await get_search_results(message.chat.id, search, offset=0, filter=True)
+                files, offset, total_results, search = await symbol_fallback_search(
+                    message.chat.id,
+                    search
+                )
                 settings = await get_settings(message.chat.id)
                 if not files:
                     if settings.get("spell_check"):
