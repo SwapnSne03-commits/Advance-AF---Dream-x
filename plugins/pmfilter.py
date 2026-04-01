@@ -653,44 +653,80 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
             pass
     await query.answer()
 
-
 @Client.on_callback_query(filters.regex(r"^seasons#"))
 async def seasons_cb_handler(client: Client, query: CallbackQuery):
     try:
+        # 🔒 User validation
         if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
             return await query.answer(
-                f"⚠️ ʜᴇʟʟᴏ {query.from_user.first_name},\nᴛʜɪꜱ ɪꜱ ɴᴏᴛ ʏᴏᴜʀ ᴍᴏᴠɪᴇ ʀᴇǫᴜᴇꜱᴛ,\nʀᴇǫᴜᴇꜱᴛ ʏᴏᴜʀ'ꜱ…",
+                f"⚠️ Hello {query.from_user.first_name},\nThis is not your request.",
                 show_alert=True,
             )
     except Exception:
         pass
+
+    # 🔑 Get key
     _, key = query.data.split("#")
-    search = FRESH.get(key).replace(" ", "_")
+
+    # 🛑 Safe check (IMPORTANT)
+    search = FRESH.get(key)
+    if not search:
+        return await query.answer("⚠️ Session expired, search again.", show_alert=True)
+
+    search = search.replace(" ", "_")
+
     req = query.from_user.id
-    offset = 0
     btn: list[list[InlineKeyboardButton]] = []
-    for i in range(0, len(SEASONS) - 1, 2):
-        btn.append([
-            InlineKeyboardButton(
-                f"Sᴇᴀꜱᴏɴ {SEASONS[i][1:]}", callback_data=f"fs#{SEASONS[i].lower()}#{key}"),
-            InlineKeyboardButton(
-                f"Sᴇᴀꜱᴏɴ {SEASONS[i+1][1:]}", callback_data=f"fs#{SEASONS[i+1].lower()}#{key}")
-        ])
 
-    btn.insert(
-        0,
-        [InlineKeyboardButton("⇊ ꜱᴇʟᴇᴄᴛ ꜱᴇᴀꜱᴏɴ ⇊", callback_data="ident")],
-    )
-    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ꜰɪʟᴇs ​↭",
-               callback_data=f"next_{req}_{key}_{offset}")])
-    await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
-    await query.answer()
+    # ✅ Safe season loop (no missing items)
+    for i in range(0, len(SEASONS), 2):
+        row = [
+            InlineKeyboardButton(
+                f"Sᴇᴀꜱᴏɴ {SEASONS[i][1:]}",
+                callback_data=f"fs#{SEASONS[i].lower()}#{key}"
+            )
+        ]
 
+        if i + 1 < len(SEASONS):
+            row.append(
+                InlineKeyboardButton(
+                    f"Sᴇᴀꜱᴏɴ {SEASONS[i+1][1:]}",
+                    callback_data=f"fs#{SEASONS[i+1].lower()}#{key}"
+                )
+            )
+
+        btn.append(row)
+
+    # 🔝 Header
+    btn.insert(0, [
+        InlineKeyboardButton("⇊ ꜱᴇʟᴇᴄᴛ ꜱᴇᴀꜱᴏɴ ⇊", callback_data="ident")
+    ])
+
+    # 🔙 FIXED BACK BUTTON
+    btn.append([
+        InlineKeyboardButton(
+            text="↭ ʙᴀᴄᴋ ᴛᴏ ꜰɪʟᴇs ↭",
+            callback_data=f"fs#homepage#{key}"
+        )
+    ])
+
+    # 🔁 Update UI safely
+    try:
+        await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
+    except Exception:
+        pass
+
+    # ⚡ Fast response
+    await query.answer(cache_time=2)
 
 @Client.on_callback_query(filters.regex(r"^fs#"))
 async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
     _, season_tag, key = query.data.split("#")
-    search = FRESH.get(key).replace("_", " ")
+    search = FRESH.get(key)
+    if not search:
+        return await query.answer("⚠️ Session expired.", show_alert=True)
+
+    search = search.replace("_", " ")
     season_tag = season_tag.lower()
     if season_tag == "homepage":
         search_final = search
