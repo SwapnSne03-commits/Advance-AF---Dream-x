@@ -106,14 +106,14 @@ def minimal_clean(text: str) -> str:
     # remove emoji
     text = re.sub(r'[\U00010000-\U0010ffff]', '', text)
 
-    # replace special chars with space
-    text = re.sub(r'[^\w\s\u0980-\u09FF\u0900-\u097F]', ' ', text)
+    # 🔥 FIX: remove ALL special chars including _
+    text = re.sub(r'[^a-zA-Z0-9\u0980-\u09FF\u0900-\u097F\s]', ' ', text)
 
     # collapse spaces
     text = re.sub(r'[ \t]+', ' ', text).strip()
-
+    text = re.sub(r'\.(mkv|mp4|avi)$', r' \1', text, flags=re.IGNORECASE)
     return text
-
+    
 def clean_caption_for_db(text: str) -> str:
     if not text:
         return ""
