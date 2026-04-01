@@ -865,18 +865,29 @@ async def cb_handler(client: Client, query: CallbackQuery):
         title = files.file_name
         size = get_size(files.file_size)
         f_caption = files.caption
+
+        title = clean_special_words(clean_filename(title))
+
+        original_caption = f_caption
+        fallback_caption = original_caption if original_caption else title
         settings = await get_settings(query.message.chat.id)
         if CUSTOM_FILE_CAPTION:
             try:
-                f_caption = CUSTOM_FILE_CAPTION.format(file_name='' if title is None else title,
-                                                       file_size='' if size is None else size,
-                                                       file_caption='' if f_caption is None else f_caption)
+                f_caption = CUSTOM_FILE_CAPTION.format(
+                    file_name=title or "",
+                    file_size=size or "",
+                    file_caption=fallback_caption
+                )
+                f_caption = clean_special_words(f_caption)
             except Exception as e:
                 logger.exception(e)
-            f_caption = f_caption
-        if f_caption is None:
-            f_caption = f"{files.file_name}"
-        await query.answer(url=f"href='https://telegram.me/{temp.U_NAME}?start=file_{query.message.chat.id}_{file.file_id}")
+                f_caption = fallback_caption
+        else:
+            f_caption = fallback_caption
+
+        if not f_caption:
+            f_caption = title
+        await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=file_{query.message.chat.id}_{file.file_id}")
 
     elif query.data.startswith("autofilter_delete"):
         await Media.collection.drop()
