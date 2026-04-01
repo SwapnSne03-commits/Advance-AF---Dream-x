@@ -27,6 +27,25 @@ logger = logging.getLogger(__name__)
 TIMEZONE = "Asia/Kolkata"
 BATCH_FILES = {}
 
+# 🔥 Words that should be removed from filename/caption
+REMOVED_SPC_WORD = ["[SANKET]", "moviesmod", "HDWebMovies", "Telegram", "TG", "www.", "hdholly", "hdmovie2.productions", "twn4all", "hdmovie2", "ott_downloader_bot", "bollyflix", "[~ᴍᴋ™~]", "ExtraFlix.pw", "hdhub4u", "skymovieshd", "@Eliteflix", "t.me", "4kdbhub", "movies4u", "tw4all", "Hdhub4u", "cinevood", "skymoviedHD", "4khdhub", "Toonworld4all", "TW4ALL", "ExtraFlix", "Hdhub", "Movies4u", "movies4u", "Vegamovies", "extraflix", "Filmy4wap", "Filmu4cab", "Tamilmv", "CineVood", "Hub4u", "Hub4", "SkymoviesHD", "Skymovieshd", "telegram", "tg", "TG", "Telegram", "HdWebMovies", "mkvcinemas", "mkvCinemas", "mkvking", "5moviez", "hdm2", "mkvcinema", "1tamil", "1tamilmv", "1Tamil", "1tamilblaster", "1TamilBlaster", "Moviez", "moviez", "yts mx", "YTS", "YTS MX", "mkvCinem", "filmyzilla", "filmzilla", "CineVood", "BT MOVIES HD", "FILMSCLUB04", "XDMovies", "mp4movies", "mp4moviez", "MLWBD", "MLSBD", "mlsbd", "mlwbd", "FibWatch", "fibwatch", "Joya9tv", "joya9tv", "Cinedoze", "CineDoze", "cinedoze", "world4u", "SSRMovies", "SSRmovies", "5MovieRulz", "FilmyCab", "hdweb", "RymOfficial", "(Mᴏᴏɴ Kɴɪɢʜᴛ)", "mkvanime"] #[remove words form file name]
+
+def clean_special_words(text: str) -> str:
+    if not text:
+        return text
+
+    cleaned = text
+    for word in REMOVED_SPC_WORD:
+        cleaned = re.sub(
+            re.escape(word),
+            "",
+            cleaned,
+            flags=re.IGNORECASE
+        )
+
+    cleaned = re.sub(r"[\t]", " ", cleaned).strip()
+    return cleaned
+
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
     try:
@@ -340,20 +359,31 @@ async def start(client, message):
                     file_id = file.file_id
                     files_ = await get_file_details(file_id)
                     files1 = files_[0]
-                    title = clean_filename(files1.file_name)
+                    title = clean_special_words(clean_filename(files1.file_name))
                     cover = files1.cover
                     size = get_size(files1.file_size)
-                    f_caption = files1.caption
+                    original_caption = files1.caption
+                    fallback_caption = original_caption if original_caption else title
                     settings = await get_settings(int(grp_id))
                     DREAMX_CAPTION = settings.get('caption', CUSTOM_FILE_CAPTION)
                     if DREAMX_CAPTION:
                         try:
-                            f_caption=DREAMX_CAPTION.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='' if f_caption is None else f_caption)
+                            f_caption = DREAMX_CAPTION.format(
+                                file_name=title or "",
+                                file_size=size or "",
+                                file_caption=fallback_caption
+                            )
+                            f_caption = clean_special_words(f_caption)   # 🔥 IMPORTANT
                         except Exception as e:
                             logger.exception(e)
-                            f_caption = f_caption
-                    if f_caption is None:
-                        f_caption = f"{clean_filename(files1.file_name)}"
+                            f_caption = fallback_caption
+                    else:
+                        f_caption = fallback_caption
+
+                    if not f_caption:
+                        f_caption = title
+                    #if f_caption is None:
+                        #f_caption = f"{clean_filename(files1.file_name)}"
                     btn = await stream_buttons(message.from_user.id, file_id)
                     msg = await client.send_cached_media(
                         chat_id=message.from_user.id,
@@ -429,21 +459,26 @@ async def start(client, message):
             return await message.reply('ɴᴏ ꜱᴜᴄʜ ꜰɪʟᴇ ᴇxɪꜱᴛꜱ !')
 
         files = files_[0]
-        title = clean_filename(files.file_name)
+        title = clean_special_words(clean_filename(files.file_name))
         size = get_size(files.file_size)
         cover = files.cover if files.cover else None
-        f_caption = files.caption
+        original_caption = files.caption
+        fallback_caption = original_caption if original_caption else title
         settings = await get_settings(int(grp_id))            
         DREAMX_CAPTION = settings.get('caption', CUSTOM_FILE_CAPTION)
         if DREAMX_CAPTION:
             try:
-                f_caption=DREAMX_CAPTION.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='' if f_caption is None else f_caption)
+                f_caption = DREAMX_CAPTION.format(file_name=title or "",file_size=size or "",file_caption=fallback_caption)
+                f_caption = clean_special_words(f_caption)
             except Exception as e:
                 logger.exception(e)
-                f_caption = f_caption
+                f_caption = fallback_caption
 
-        if f_caption is None:
-            f_caption = clean_filename(files.file_name)
+        else:
+            f_caption = fallback_caption
+
+        if not f_caption:
+            f_caption = title
         btn = await stream_buttons(message.from_user.id, file_id)
         msg = await client.send_cached_media(
             chat_id=message.from_user.id,
