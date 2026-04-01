@@ -233,22 +233,19 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
 
     
     MOVIE_UPDATE_NOTIFY_TXT = """
-<b><a href="{poster_url}">📥</a> <a href="{imdb_url}">New {tag} Added</a></b>
-
 <blockquote>
-🏷️ <b>Tɪᴛʟᴇ :</b> <code>{filename}</code>
+<b><a href="{poster_url}">📥</a> <a href="{imdb_url}">New Files Added</a></b></blockquote>
 
-🎭 <b>Gᴇɴʀᴇs :</b> {genres}
-📺 <b>OTT :</b> {ott}
+🏷️ <b>Tɪᴛʟᴇ :</b><code>{filename}</code><b>{tag}</b>
 
-📌 <b>Fᴏʀᴍᴀᴛ :</b> {format}
-🌿 <b>Qᴜᴀʟɪᴛʏ :</b> {quality}
-🔉 <b>Aᴜᴅɪᴏ :</b> {language}
+🎭 <b>Gᴇɴʀᴇs : {genres}</b>
+📺 <b>OTT : {ott}</b>
 
-{episodes}
-</blockquote>
+📌 <b>Fᴏʀᴍᴀᴛ : {format}</b> 
+🌿 <b>Qᴜᴀʟɪᴛʏ : {quality}</b> 
+🔉 <b>Aᴜᴅɪᴏ : {language}</b> 
 
-🔍 <b>Sᴇᴀʀᴄʜ →</b> {search_link}
+<b>{episodes}</b>
 """
 
 
@@ -382,7 +379,7 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
 ○ ᴍᴜʟᴛɪ-ᴘʟᴀʏᴇʀ sᴛʀᴇᴀᴍɪɴɢ ʟɪɴᴋs
 ○ ᴀᴅ-ғʀᴇᴇ ᴇxᴘᴇʀɪᴇɴᴄᴇ
 
-👨‍💻 ᴄᴏɴᴛᴀᴄᴛ ᴛʜᴇ <a href='https://t.me/dreamxbotz'>Owner</a> ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴛʀɪᴀʟ.
+👨‍💻 ᴄᴏɴᴛᴀᴄᴛ ᴛʜᴇ <a href='https://t.me/Graduate_Movies'>Owner</a> ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴛʀɪᴀʟ.
 
 ➛ ᴜꜱᴇ /plan ᴛᴏ ꜱᴇᴇ ᴀʟʟ ᴏᴜʀ ᴘʟᴀɴꜱ ᴀᴛ ᴏɴᴄᴇ.
 ➛ ᴄʜᴇᴄᴋ ʏᴏᴜʀ ᴀᴄᴛɪᴠᴇ ᴘʟᴀɴ ʙʏ ᴜꜱɪɴɢ : /myplan</b>"""
@@ -404,10 +401,9 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
 
 ‼️ ᴍᴜsᴛ sᴇɴᴅ sᴄʀᴇᴇɴsʜᴏᴛ ᴀғᴛᴇʀ ᴘᴀʏᴍᴇɴᴛ.</b>"""
 
-    SOURCE_TXT ="""<b>ՏOᑌᖇᑕᗴ ᑕOᗪᗴ : 👇 </b>
+    SOURCE_TXT ="""<b>
 
-This Is An Open-Source Project. You Can Use It Freely, But Selling The Source Code Is Strictly Prohibited.\n
-ꜱᴏᴜʀᴄᴇ ᴄᴏᴅᴇ ʜᴇʀᴇ ◉› :<a href=https://github.com/DreamXBotz/Auto_Filter_Bot.git>𝓓𝓻𝓮𝓪𝓶𝔁𝓑𝓸𝓽𝔃</a>\n """
+join Our Official Channels - @Graduate_Movies</b>\n """
 
     SETTING_TXT = """    
 <u>ꜱᴇᴛᴛɪɴɢꜱ</u> :
