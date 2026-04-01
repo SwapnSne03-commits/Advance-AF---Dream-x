@@ -229,7 +229,7 @@ Nᴀᴍᴇ : {}
 
 Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
     
-    CAPTION = """<b>{file_caption}\n\n━━━━━━━━━━━━━━\n🎭 Cinema Zone ➤\n@Graduate_Movies | @Graduate_Request | @Graduate_Request_Pro\n━━━━━━━━━━━━━━</b>"""
+    CAPTION = """<b>{file_caption}\n\n{metadata}\n\n━━━━━━━━━━━━━━\n🎭 Cinema Zone ➤\n@Graduate_Movies | @Graduate_Request | @Graduate_Request_Pro\n━━━━━━━━━━━━━━</b>"""
 
     
     MOVIE_UPDATE_NOTIFY_TXT = """
