@@ -389,7 +389,7 @@ async def start(client, message):
                         chat_id=message.from_user.id,
                         cover=cover,
                         file_id=file_id,
-                        caption=f_caption,
+                        caption=clean_special_words(fallback_caption)
                         protect_content=settings.get('file_secure', PROTECT_CONTENT),
                         reply_markup=InlineKeyboardMarkup(btn)
                     )
@@ -438,7 +438,11 @@ async def start(client, message):
                 DREAMX_CAPTION = settings.get('caption', CUSTOM_FILE_CAPTION)
                 if DREAMX_CAPTION:
                     try:
-                        f_caption=DREAMX_CAPTION.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='')
+                        f_caption = DREAMX_CAPTION.format(
+                            file_name=title or "",
+                            file_size=size or "",
+                            file_caption=title   # 🔥 বা fallback_caption
+                        )
                     except:
                         return
                 await msg.edit_caption(
