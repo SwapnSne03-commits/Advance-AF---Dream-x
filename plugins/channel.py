@@ -21,10 +21,10 @@ logger = logging.getLogger(__name__)
 # Precomputed sets for faster lookups
 IGNORE_WORDS = {
     "rarbg", "dub", "sub", "sample", "mkv", "aac", "combined",
-    "action", "adventure", "animation", "biography", "comedy", "crime", 
+    "action", "adventure", "animation", "biography", "comedy", 
     "documentary", "drama", "fantasy", "film-noir", "history", 
     "horror", "music", "musical", "mystery", "romance", "sci-fi", "sport", 
-    "thriller", "war", "western", "hdcam", "hdtc", "camrip", "ts", "tc", 
+    "thriller", "western", "hdcam", "hdtc", "camrip", "ts", "tc", 
     "telesync", "dvdscr", "dvdrip", "predvd", "webrip", "web-dl", "tvrip", 
     "hdtv", "web dl", "webdl", "bluray", "brrip", "bdrip", "360p", "480p", 
     "720p", "1080p", "2160p", "4k", "1440p", "540p", "240p", "140p", "hevc", 
@@ -33,7 +33,7 @@ IGNORE_WORDS = {
     "mar", "marathi", "guj", "gujarati", "urd", "urdu", "kor", "korean", "jpn", 
     "japanese", "nf", "netflix", "sonyliv", "sony", "sliv", "amzn", "prime", 
     "primevideo", "hotstar", "zee5", "jio", "jhs", "aha", "hbo", "paramount", 
-    "apple", "hoichoi", "sunnxt", "viki", "tg", "movies", "tgmovies", "x264", "h265", "h264", "x265"
+    "apple", "hoichoi", "sunnxt", "viki", "tg", "movies", "tgmovies", "x264", "h265", "h264", "x265", "H 264", "Hdwebmovies", 
 }|BAD_WORDS
 
 # Constants
@@ -58,7 +58,7 @@ OTT_PLATFORMS = {
     "sonyliv": "SonyLiv", "sony": "SonyLiv", "sliv": "SonyLiv",
     "amzn": "Amazon Prime Video", "prime": "Amazon Prime Video", "primevideo": "Amazon Prime Video",
     "hotstar": "Disney+ Hotstar", "zee5": "Zee5",
-    "jio": "JioHotstar", "jhs": "JioHotstar",
+    "jio": "JioHotstar", "jhs": "JioHotstar", "dsnp": "Disney",
     "aha": "Aha", "hbo": "HBO Max", "paramount": "Paramount+",
     "apple": "Apple TV+", "hoichoi": "Hoichoi", "sunnxt": "Sun NXT", "viki": "Viki"
 }
@@ -91,6 +91,40 @@ MEDIA_FILTER = filters.document | filters.video | filters.audio
 locks = defaultdict(asyncio.Lock)
 pending_updates = {}
 error_tmdb = False
+
+def clean_title_advanced(name: str) -> str:
+    if not name:
+        return name
+
+    # 🔥 remove season/episode
+    name = re.sub(r'\bS\d{1,2}E\d{1,2}\b', ' ', name, flags=re.I)
+    name = re.sub(r'\bS\d{1,2}\b', ' ', name, flags=re.I)
+    name = re.sub(r'\bE\d{1,3}\b', ' ', name, flags=re.I)
+    name = re.sub(r'\bEp(?:isode)?\s*\d+\b', ' ', name, flags=re.I)
+
+    # 🔥 remove quality/format
+    name = QUALITY_PATTERN.sub(" ", name)
+    name = FORMAT_PATTERN.sub(" ", name)
+
+    # 🔥 remove codecs
+    name = re.sub(r'\b(x264|x265|h264|h265|hevc)\b', ' ', name, flags=re.I)
+
+    # remove x2 
+    name = re.sub(r'\bx\d{1,3}\b', ' ', name, flags=re.I)
+
+    # 🔥 remove audio tags
+    name = re.sub(r'\b(ddp?\d+(\.\d+)?)\b', ' ', name, flags=re.I)
+
+    # 🔥 remove extra numbers (but keep year)
+    name = re.sub(r'\b(?!19\d{2}|20\d{2})\d{1,3}\b', ' ', name)
+
+    # 🔥 remove leftover junk words
+    name = re.sub(r'\b(merged|dual|audio|esub|proper|hq)\b', ' ', name, flags=re.I)
+
+    # clean spaces
+    name = re.sub(r'\s+', ' ', name).strip()
+
+    return name
 
 def clean_mentions_links(text: str) -> str:
     return CLEAN_PATTERN.sub("", text or "").strip()
@@ -286,9 +320,12 @@ def extract_media_info(filename: str, caption: str):
         return name.strip()
 
     base_name = _strip_season_episode_tokens(base_name)
-    # If stripping accidentally removed everything, fall back to a safer value
-    if not base_name:
+    base_name = clean_title_advanced(base_name)
+
+    # 🔥 better fallback condition
+    if not base_name or len(base_name.split()) <= 1:
         base_name = normalize(remove_ignored_words(normalize(processed_raw))) or filename
+
     base_name = smart_title(base_name)
 
     return {
