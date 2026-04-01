@@ -177,29 +177,29 @@ async def next_page(bot, query):
             ]
             for file in files
         ]
-        btn.insert(0,
-                   [
-                       InlineKeyboardButton(
-                           f'Qᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
-                       InlineKeyboardButton(
-                           "Lᴀɴɢᴜᴀɢᴇ", callback_data=f"languages#{key}"),
-                       InlineKeyboardButton(
-                           "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
-                   ]
-                   )
+       # btn.insert(0,
+                 #  [
+                     #  InlineKeyboardButton(
+                        #   f'Qᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
+                    #   InlineKeyboardButton(
+                          # "Lᴀɴɢᴜᴀɢᴇ", callback_data=f"languages#{key}"),
+                      # InlineKeyboardButton(
+                          # "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
+                  # ]
+                   #)
 
     else:
         btn = []
-        btn.insert(0,
-                   [
-                       InlineKeyboardButton(
-                           f'Qᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
-                       InlineKeyboardButton(
-                           "Lᴀɴɢᴜᴀɢᴇ", callback_data=f"languages#{key}"),
-                       InlineKeyboardButton(
-                           "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
-                   ]
-                   )
+        #btn.insert(0,
+                 #  [
+                       #InlineKeyboardButton(
+                         #  f'Qᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
+                       #InlineKeyboardButton(
+                          # "Lᴀɴɢᴜᴀɢᴇ", callback_data=f"languages#{key}"),
+                       #InlineKeyboardButton(
+                           #"Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
+                  # ]
+                   #)
         
     if ULTRA_FAST_MODE:
         if 0 < offset <= 10:
@@ -1842,28 +1842,28 @@ async def auto_filter(client, msg, spoll=False):
                 ]
                 for file in files
             ]
-            btn.insert(0,
-                       [
-                           InlineKeyboardButton(
-                               f'Qᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
-                           InlineKeyboardButton(
-                               "Lᴀɴɢᴜᴀɢᴇ", callback_data=f"languages#{key}"),
-                           InlineKeyboardButton(
-                               "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
-                       ]
-                       )    
+           # btn.insert(0,
+                   #    [
+                         #  InlineKeyboardButton(
+                       #        f'Qᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
+                        #   InlineKeyboardButton(
+                   #            "Lᴀɴɢᴜᴀɢᴇ", callback_data=f"languages#{key}"),
+                          # InlineKeyboardButton(
+                     #          "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
+                      # ]
+                     #  )    
         else:
             btn = []
-            btn.insert(0,
-                       [
-                           InlineKeyboardButton(
-                               f'Qᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
-                           InlineKeyboardButton(
-                               "Lᴀɴɢᴜᴀɢᴇ", callback_data=f"languages#{key}"),
-                           InlineKeyboardButton(
-                               "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
-                       ]
-                       )
+            #btn.insert(0,
+                      # [
+                          # InlineKeyboardButton(
+                            #   f'Qᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
+                         #  InlineKeyboardButton(
+                           #    "Lᴀɴɢᴜᴀɢᴇ", callback_data=f"languages#{key}"),
+                         #  InlineKeyboardButton(
+                             #  "Sᴇᴀsᴏɴ",  callback_data=f"seasons#{key}")
+                      # ]
+                      # )
             
         if offset != "":
             req = message.from_user.id if message.from_user else 0
