@@ -2,6 +2,7 @@ import re
 import logging
 import unicodedata
 import asyncio
+import pytz
 from datetime import datetime
 from collections import defaultdict
 from plugins.Dreamxfutures.Imdbposter import get_movie_detailsx, fetch_image, get_movie_details
@@ -91,6 +92,22 @@ MEDIA_FILTER = filters.document | filters.video | filters.audio
 locks = defaultdict(asyncio.Lock)
 pending_updates = {}
 error_tmdb = False
+
+def extract_title_upto_year_or_season(text: str) -> str:
+    if not text:
+        return text
+
+    # 🔥 season আগে check
+    season_match = re.search(r'\bS(?:eason)?\s*0*\d{1,2}\b', text, re.I)
+    if season_match:
+        return text[:season_match.start()]
+
+    # 🔥 year check
+    year_match = re.search(r'\b(19|20)\d{2}\b', text)
+    if year_match:
+        return text[:year_match.end()]
+
+    return text
 
 def clean_title_advanced(name: str) -> str:
     if not name:
@@ -206,6 +223,15 @@ def extract_media_info(filename: str, caption: str):
     season = episode = year = None
     tag = "#MOVIE"
     processed_raw = base_raw = filename
+    # 🔥 caption priority (MAIN FIX)
+    source_text = caption if caption else filename
+    source_text = normalize(clean_mentions_links(source_text))
+
+    # 🔥 cut after year/season
+    source_text = extract_title_upto_year_or_season(source_text)
+
+    # 🔥 override base_raw
+    base_raw = source_text
     quality = get_qualities(caption_clean) or get_qualities(filename.lower()) or "N/A"
     format_type = get_format(caption_clean)
     if format_type == "N/A":
@@ -265,6 +291,7 @@ def extract_media_info(filename: str, caption: str):
     base_name = normalize(remove_ignored_words(normalize(base_raw)))
     base_name = re.sub(r'\b\d+bit\b', '', base_name, flags=re.IGNORECASE)
     base_name = re.sub(r'\bx26[45]\b', '', base_name, flags=re.IGNORECASE)
+    base_name = re.sub(r'\bx\d+\b', '', base_name, flags=re.IGNORECASE)
     base_name = re.sub(r'\s+', ' ', base_name).strip()
     if year and year not in base_name:
         base_name += f" {year}"
@@ -570,6 +597,10 @@ async def update_movie_message(bot, base_name):
 
 def generate_movie_message(movie_doc, base_name):
     all_formats = set()
+    # 🔥 date & time (Kolkata)
+    now = datetime.now(pytz.timezone("Asia/Kolkata"))
+    date_str = now.strftime("%d %b %Y")   # 01 Apr 2026
+    time_str = now.strftime("%H.%M.%S")   # 10.00.01
     all_qualities = set()
     all_languages = set()
     all_ott_platforms = set()
@@ -693,4 +724,8 @@ def generate_movie_message(movie_doc, base_name):
         episodes=epi_block,
         rating=movie_doc.get("rating", "N/A"),
         search_link=temp.B_LINK
-    )
+    )+ f"""
+
+    <b>ᴜᴘʟᴏᴀᴅᴇᴅ ʙʏ - <a href="https://t.me/Graduate_Movies">Graduate Movies</a></b>
+    <b>📅 {date_str}  ⏱️{time_str}</b>
+    """
