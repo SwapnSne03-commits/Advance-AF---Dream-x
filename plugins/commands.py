@@ -34,7 +34,12 @@ def clean_special_words(text: str) -> str:
     if not text:
         return text
 
-    cleaned = text
+    cleaned = str(text)
+
+    # 🔥 1. Remove HTML tags completely
+    cleaned = re.sub(r'<.*?>', '', cleaned)
+
+    # 🔥 2. Remove unwanted words
     for word in REMOVED_SPC_WORD:
         cleaned = re.sub(
             re.escape(word),
@@ -43,7 +48,12 @@ def clean_special_words(text: str) -> str:
             flags=re.IGNORECASE
         )
 
-    cleaned = re.sub(r"[\t]", " ", cleaned).strip()
+    # 🔥 3. Remove leftover single letters from tags (b, i, u)
+    cleaned = re.sub(r'\b(b|i|u)\b', '', cleaned)
+
+    # 🔥 4. Clean spaces
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+
     return cleaned
 
 @Client.on_message(filters.command("start") & filters.incoming)
