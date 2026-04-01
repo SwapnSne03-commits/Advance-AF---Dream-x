@@ -30,6 +30,131 @@ BATCH_FILES = {}
 # 🔥 Words that should be removed from filename/caption
 REMOVED_SPC_WORD = ["[SANKET]", "SANKET", "moviesmod", "HDWebMovies", "Telegram", "TG", "www.", "hdholly", "hdmovie2.productions", "twn4all", "hdmovie2", "ott_downloader_bot", "bollyflix", "[~ᴍᴋ™~]", "ExtraFlix.pw", "hdhub4u", "skymovieshd", "@Eliteflix", "t.me", "4kdbhub", "movies4u", "tw4all", "Hdhub4u", "cinevood", "skymoviedHD", "4khdhub", "Toonworld4all", "TW4ALL", "ExtraFlix", "Hdhub", "Movies4u", "movies4u", "Vegamovies", "extraflix", "Filmy4wap", "Filmu4cab", "Tamilmv", "CineVood", "Hub4u", "Hub4", "SkymoviesHD", "Skymovieshd", "telegram", "tg", "TG", "Telegram", "HdWebMovies", "mkvcinemas", "mkvCinemas", "mkvking", "5moviez", "hdm2", "mkvcinema", "1tamil", "1tamilmv", "1Tamil", "1tamilblaster", "1TamilBlaster", "Moviez", "moviez", "yts mx", "YTS", "YTS MX", "mkvCinem", "filmyzilla", "filmzilla", "CineVood", "BT MOVIES HD", "FILMSCLUB04", "XDMovies", "mp4movies", "mp4moviez", "MLWBD", "MLSBD", "mlsbd", "mlwbd", "FibWatch", "fibwatch", "Joya9tv", "joya9tv", "Cinedoze", "CineDoze", "cinedoze", "world4u", "SSRMovies", "SSRmovies", "5MovieRulz", "FilmyCab", "hdweb", "RymOfficial", "(Mᴏᴏɴ Kɴɪɢʜᴛ)", "mkvanime"] #[remove words form file name]
 
+LANGUAGE_PATTERNS = {
+
+    "English": ["eng", "english"],
+    "Hindi": ["hin", "hindi"],
+    "Bengali": ["ben", "bangla", "bengali"],
+    "Tamil": ["tam", "tamil"],
+    "Telugu": ["tel", "telugu"],
+    "Malayalam": ["mal", "malayalam"],
+    "Kannada": ["kan", "kannada"],
+    "Marathi": ["mar", "marathi"],
+    "Punjabi": ["pun", "punjabi", "Panjabi"],
+    "Gujarati": ["guj", "gujarati"],
+    "Urdu": ["urdu"],
+
+    "Spanish": ["spa", "spanish"],
+    "French": ["fre", "french"],
+    "German": ["ger", "german"],
+    "Italian": ["ita", "italian"],
+    "Portuguese": ["por", "portuguese"],
+    "Russian": ["rus", "russian"],
+
+    "Japanese": ["jap", "japanese"],
+    "Korean": ["kor", "korean"],
+    "Chinese": ["chi", "chinese", "mandarin"],
+    "Thai": ["thai"],
+    "Indonesian": ["indo", "indonesian"],
+    "Vietnamese": ["viet", "vietnamese"],
+
+    "Arabic": ["arabic"],
+    "Persian": ["persian", "farsi"],
+}
+
+def extract_languages(text):
+
+    if not text:
+        return ""
+
+    # normalize
+    text = text.lower()
+    text = re.sub(r"[._\-]", " ", text)
+
+    found = []
+
+    for lang, keys in LANGUAGE_PATTERNS.items():
+        for k in keys:
+            if re.search(rf"\b{re.escape(k)}\b", text):
+                found.append(lang)
+                break
+
+    # remove duplicates
+    found = list(dict.fromkeys(found))
+
+    # remove "Dual Audio" if real languages exist
+    if len(found) > 1 and "Dual Audio" in found:
+        found.remove("Dual Audio")
+
+    return ", ".join(found)
+
+SUBTITLE_PATTERNS = {
+    "Esubs": ["esub", "esubs", "eng sub"],
+    "MSubs": ["msub", "msubs", "multi sub", "multi subs"]
+}
+
+def extract_quality(text):
+
+    if not text:
+        return ""
+
+    text = text.lower()
+
+    patterns = [
+        r"2160p", r"1440p", r"1080p", r"720p", r"480p", r"360p",
+        r"4k", r"hdrip", r"webrip", r"webdl", r"bluray", r"brrip", r"dvdrip"
+    ]
+
+    for p in patterns:
+        m = re.search(rf"\b{p}\b", text)
+        if m:
+            return m.group(0).upper()
+
+    return ""
+
+def extract_subtitles(text):
+
+    if not text:
+        return ""
+
+    text = text.lower()
+
+    subs_patterns = {
+        "Esubs": ["esub", "esubs", "eng sub", "english sub"],
+        "Msubs": ["msub", "msubs", "multi sub", "multi subs"]
+    }
+
+    for label, keys in subs_patterns.items():
+        for k in keys:
+            if k in text:
+                return label
+
+    return ""
+
+def build_metadata(title, caption):
+
+    text = f"{title} {caption}"
+
+    quality = extract_quality(text)
+    language = extract_languages(text)
+    subs = extract_subtitles(text)
+
+    parts = []
+
+    if quality:
+        parts.append(quality)
+
+    if language:
+        parts.append(language)
+
+    if subs:
+        parts.append(subs)
+
+    if not parts:
+        return ""
+
+    return " | ".join(parts)
+
 def clean_special_words(text: str) -> str:
     if not text:
         return text
@@ -374,6 +499,12 @@ async def start(client, message):
                     size = get_size(files1.file_size)
                     original_caption = files1.caption
                     fallback_caption = original_caption if original_caption else title
+                    metadata = build_metadata(title, fallback_caption)
+
+                    if metadata:
+                        metadata = f"📌 {metadata}"
+                    else:
+                        metadata = ""
                     settings = await get_settings(int(grp_id))
                     DREAMX_CAPTION = CUSTOM_FILE_CAPTION
                     if DREAMX_CAPTION:
@@ -381,7 +512,8 @@ async def start(client, message):
                             f_caption = DREAMX_CAPTION.format(
                                 file_name=title or "",
                                 file_size=size or "",
-                                file_caption=fallback_caption
+                                file_caption=fallback_caption,
+                                metadata=metadata
                             )
                             f_caption = clean_special_words(f_caption)   # 🔥 IMPORTANT
                         except Exception as e:
@@ -479,11 +611,17 @@ async def start(client, message):
         cover = files.cover if files.cover else None
         original_caption = files.caption
         fallback_caption = original_caption if original_caption else title
+        metadata = build_metadata(title, fallback_caption)
+
+        if metadata:
+            metadata = f"📌 {metadata}"
+        else:
+            metadata = ""
         settings = await get_settings(int(grp_id))            
         DREAMX_CAPTION = CUSTOM_FILE_CAPTION
         if DREAMX_CAPTION:
             try:
-                f_caption = DREAMX_CAPTION.format(file_name=title or "",file_size=size or "",file_caption=fallback_caption)
+                f_caption = DREAMX_CAPTION.format(file_name=title or "",file_size=size or "",file_caption=fallback_caption, metadata=metadata)
                 f_caption = clean_special_words(f_caption)
             except Exception as e:
                 logger.exception(e)
