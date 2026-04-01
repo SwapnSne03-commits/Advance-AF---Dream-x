@@ -123,8 +123,8 @@ def clean_caption_for_db(text: str) -> str:
 
     text = unicodedata.normalize("NFKD", text)
 
-    # 🔥 remove HTML tags (IMPORTANT)
-    text = re.sub(r"</?[^>]+>", "", text)
+    # 🔥 FIX: proper HTML tag remove (no leftover b/i)
+    text = re.sub(r"</?[^>]+>", " ", text)
 
     # remove usernames
     text = re.sub(r'@\w+', '', text)
@@ -135,9 +135,10 @@ def clean_caption_for_db(text: str) -> str:
     # remove emoji
     text = re.sub(r'[\U00010000-\U0010ffff]', '', text)
 
-    # collapse spaces but keep newline
+    # clean extra spaces কিন্তু newline রাখবে
     text = re.sub(r'[ \t]+', ' ', text)
     text = re.sub(r'\n+', '\n', text).strip()
+    text = re.sub(r'\bb\b', '', text)
 
     return text
 
