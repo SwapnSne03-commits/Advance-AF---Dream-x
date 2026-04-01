@@ -870,13 +870,20 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         original_caption = f_caption
         fallback_caption = original_caption if original_caption else title
+        metadata = build_metadata(title, fallback_caption)
+
+        if metadata:
+            metadata = f"📌 {metadata}"
+        else:
+            metadata = ""
         settings = await get_settings(query.message.chat.id)
         if CUSTOM_FILE_CAPTION:
             try:
                 f_caption = CUSTOM_FILE_CAPTION.format(
                     file_name=title or "",
                     file_size=size or "",
-                    file_caption=fallback_caption
+                    file_caption=fallback_caption,
+                    metadata=metadata
                 )
                 f_caption = clean_special_words(f_caption)
             except Exception as e:
