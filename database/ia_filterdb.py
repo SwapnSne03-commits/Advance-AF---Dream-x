@@ -270,15 +270,23 @@ async def get_search_results(chat_id, query, file_type=None, max_results=None, o
                     new_parts.append(f"(?:{season_pattern}|{normal_pattern})")
 
                 else:
+                    # 🔹 যদি language short code হয় → loose match
                     new_parts.append(
-                        r"(\b|[\.\+\-_])" + re.escape(part) + r"(\b|[\.\+\-_])"
+                        r"(\b|[\.\+\-_])" + re.escape(part) + r"\w*(\b|[\.\+\-_])"
                     )
 
             raw_pattern = r".*[\s\.\+\-_()\[\]]".join(new_parts)
             raw_pattern = r"\b" + raw_pattern + r"\b"
         else:
             # For single-word queries, use word boundaries for accuracy.
-            raw_pattern = r"\b" + re.escape(query) + r"\b"
+            query_lower = query.lower()
+
+            if re.fullmatch(r"\d{1,2}", query_lower):
+                # 🔥 number → exact
+                raw_pattern = r"\b" + re.escape(query) + r"\b"
+            else:
+                # 🔥 word → loose match
+                raw_pattern = r"(\b|[\.\+\-_])" + re.escape(query) + r"\w*(\b|[\.\+\-_])"
 
         try:
             if not raw_pattern:
