@@ -515,7 +515,6 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
 
 # languages
 
-
 @Client.on_callback_query(filters.regex(r"^languages#"))
 async def languages_cb_handler(client: Client, query: CallbackQuery):
     try:
@@ -528,27 +527,8 @@ async def languages_cb_handler(client: Client, query: CallbackQuery):
     except:
         pass
 
-    _, lang, key = query.data.split("#")
-
-    search = FRESH.get(key)
-    search = search.replace("_", " ")
-
-    # 🔹 সব language short code list
-    all_lang_codes = list(LANGUAGES.values())
-
-    # 🔹 আগে থেকে কোনো language থাকলে remove করো
-    words = search.split()
-    words = [w for w in words if w.lower() not in all_lang_codes]
-
-    # 🔹 নতুন language add (homepage না হলে)
-    if lang != "homepage":
-        words.append(lang.lower())
-
-    # 🔹 duplicate remove
-    words = list(dict.fromkeys(words))
-
-    # 🔹 final search তৈরি
-    search = " ".join(words)
+    # ✅ correct parsing
+    _, key = query.data.split("#")
 
     items = list(LANGUAGES.items())
     btn = []
@@ -565,11 +545,13 @@ async def languages_cb_handler(client: Client, query: CallbackQuery):
 
     btn.insert(0, [InlineKeyboardButton(
         text="⇊ ꜱᴇʟᴇᴄᴛ ʟᴀɴɢᴜᴀɢᴇ ⇊", callback_data="ident")])
-    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ꜰɪʟᴇs ↭",
-               callback_data=f"fl#homepage#{key}")])
+
+    btn.append([InlineKeyboardButton(
+        text="↭ ʙᴀᴄᴋ ᴛᴏ ꜰɪʟᴇs ↭",
+        callback_data=f"fl#homepage#{key}"
+    )])
 
     await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
-
 
 @Client.on_callback_query(filters.regex(r"^fl#"))
 async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
