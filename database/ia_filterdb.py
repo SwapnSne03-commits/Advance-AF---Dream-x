@@ -93,28 +93,51 @@ def minimal_clean(text: str) -> str:
         return ""
 
     import unicodedata
+    import re
 
-    # 🔹 Step 1: normalize unicode (𝐓𝐆 → TG)
     text = unicodedata.normalize("NFKD", text)
 
-    # 🔹 Step 2: remove usernames
+    # remove usernames
     text = re.sub(r'@\w+', '', text)
 
-    # 🔹 Step 3: remove links
+    # remove links
     text = re.sub(r'(https?://\S+|www\.\S+|t\.me/\S+)', '', text)
 
-    # 🔹 Step 4: remove emoji ONLY (not languages)
-    text = re.sub(
-        r'[\U00010000-\U0010ffff]',  # emoji range
-        '',
-        text
-    )
+    # remove emoji
+    text = re.sub(r'[\U00010000-\U0010ffff]', '', text)
 
-    # 🔹 Step 5: remove special symbols but KEEP letters (all languages)
-    text = re.sub(r'[^\w\s\u0980-\u09FF\u0900-\u097F.,-]', '', text)
+    # replace special chars with space
+    text = re.sub(r'[^\w\s\u0980-\u09FF\u0900-\u097F]', ' ', text)
 
-    # 🔹 Step 6: clean extra spaces (tab untouched)
-    text = re.sub(r' +', ' ', text).strip()
+    # collapse spaces
+    text = re.sub(r'[ \t]+', ' ', text).strip()
+
+    return text
+
+def clean_caption_for_db(text: str) -> str:
+    if not text:
+        return ""
+
+    import unicodedata
+    import re
+
+    text = unicodedata.normalize("NFKD", text)
+
+    # 🔥 remove HTML tags (IMPORTANT)
+    text = re.sub(r"</?[^>]+>", "", text)
+
+    # remove usernames
+    text = re.sub(r'@\w+', '', text)
+
+    # remove links
+    text = re.sub(r'(https?://\S+|www\.\S+|t\.me/\S+)', '', text)
+
+    # remove emoji
+    text = re.sub(r'[\U00010000-\U0010ffff]', '', text)
+
+    # collapse spaces but keep newline
+    text = re.sub(r'[ \t]+', ' ', text)
+    text = re.sub(r'\n+', '\n', text).strip()
 
     return text
 
@@ -122,10 +145,9 @@ async def save_file(media):
     """Save file in database, with detailed logging."""
     file_id, file_ref = unpack_new_file_id(media.file_id)
     file_name = minimal_clean(str(media.file_name))
-    file_name = re.sub(r"\s+", " ", file_name).strip()
     caption = None
     if media.caption and INDEX_CAPTION:
-        caption = minimal_clean(str(media.caption.html))
+        caption = clean_caption_for_db(str(media.caption))
     saveMedia = Media
     target_db = "Primary"
     if MULTIPLE_DB:
