@@ -528,9 +528,27 @@ async def languages_cb_handler(client: Client, query: CallbackQuery):
     except:
         pass
 
-    _, key = query.data.split("#")
+    _, lang, key = query.data.split("#")
+
     search = FRESH.get(key)
-    search = search.replace(' ', '_')
+    search = search.replace("_", " ")
+
+    # 🔹 সব language short code list
+    all_lang_codes = list(LANGUAGES.values())
+
+    # 🔹 আগে থেকে কোনো language থাকলে remove করো
+    words = search.split()
+    words = [w for w in words if w.lower() not in all_lang_codes]
+
+    # 🔹 নতুন language add (homepage না হলে)
+    if lang != "homepage":
+        words.append(lang.lower())
+
+    # 🔹 duplicate remove
+    words = list(dict.fromkeys(words))
+
+    # 🔹 final search তৈরি
+    search = " ".join(words)
 
     items = list(LANGUAGES.items())
     btn = []
@@ -559,11 +577,6 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     search = FRESH.get(key)
     search = search.replace("_", " ")
-    baal = lang in search
-    if baal:
-        search = search.replace(lang, "")
-    else:
-        search = search
     req = query.from_user.id
     chat_id = query.message.chat.id
     message = query.message
@@ -572,9 +585,29 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
             return await query.answer(f"⚠️ ʜᴇʟʟᴏ {query.from_user.first_name},\nᴛʜɪꜱ ɪꜱ ɴᴏᴛ ʏᴏᴜʀ ᴍᴏᴠɪᴇ ʀᴇǫᴜᴇꜱᴛ,\nʀᴇǫᴜᴇꜱᴛ ʏᴏᴜʀ'ꜱ...", show_alert=True,)
     except:
         pass
+    search = FRESH.get(key)
+    search = search.replace("_", " ")
+
+    # 🔹 সব language code
+    all_lang_codes = list(LANGUAGES.values())
+
+    # 🔹 split words
+    words = search.split()
+
+    # 🔹 remove old language
+    words = [w for w in words if w.lower() not in all_lang_codes]
+
+    # 🔹 add new language
     if lang != "homepage":
-        search = f"{search} {lang}"
+        words.append(lang.lower())
+
+    # 🔹 remove duplicate
+    words = list(dict.fromkeys(words))
+
+    # 🔹 final search
+    search = " ".join(words)
     BUTTONS[key] = search
+    FRESH[key] = search.replace(" ", "_")
     files, offset, total_results = await get_search_results(chat_id, search, offset=0, filter=True)
     if not files:
         await query.answer("🚫 ɴᴏ ꜰɪʟᴇꜱ ᴡᴇʀᴇ ꜰᴏᴜɴᴅ 🚫", show_alert=1)
