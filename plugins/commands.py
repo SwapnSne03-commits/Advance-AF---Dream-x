@@ -159,12 +159,12 @@ def clean_special_words(text: str) -> str:
     if not text:
         return text
 
-    cleaned = str(text)
+    cleaned = text
 
-    # 🔥 1. Remove HTML tags completely
-    cleaned = re.sub(r'<.*?>', '', cleaned)
+    # 🔥 Remove HTML tags
+    cleaned = re.sub(r"</?[^>]+>", "", cleaned)
 
-    # 🔥 2. Remove unwanted words
+    # 🔥 Remove unwanted words
     for word in REMOVED_SPC_WORD:
         cleaned = re.sub(
             re.escape(word),
@@ -173,11 +173,9 @@ def clean_special_words(text: str) -> str:
             flags=re.IGNORECASE
         )
 
-    # 🔥 3. Remove leftover single letters from tags (b, i, u)
-    cleaned = re.sub(r'\b(b|i|u)\b', '', cleaned)
-
-    # 🔥 4. Clean spaces
-    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    # 🔥 Fix spaces & newlines
+    cleaned = re.sub(r"[ \t]+", " ", cleaned)
+    cleaned = re.sub(r"\n+", "\n", cleaned).strip()
 
     return cleaned
 
@@ -532,6 +530,7 @@ async def start(client, message):
                         cover=cover,
                         file_id=file_id,
                         caption=f_caption,
+                        parse_mode=enums.ParseMode.HTML,
                         protect_content=settings.get('file_secure', PROTECT_CONTENT),
                         reply_markup=InlineKeyboardMarkup(btn)
                     )
@@ -568,6 +567,7 @@ async def start(client, message):
                     chat_id=message.from_user.id,
                     cover=cover,
                     file_id=file_id,
+                    parse_mode=enums.ParseMode.HTML,
                     protect_content=settings.get('file_secure', PROTECT_CONTENT),
                     reply_markup=InlineKeyboardMarkup(btn))
 
@@ -638,6 +638,7 @@ async def start(client, message):
             file_id=file_id,
             cover=cover,
             caption=f_caption,
+            parse_mode=enums.ParseMode.HTML,
             protect_content=settings.get('file_secure', PROTECT_CONTENT),
             reply_markup=InlineKeyboardMarkup(btn)
         )
