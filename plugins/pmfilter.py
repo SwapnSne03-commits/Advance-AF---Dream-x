@@ -38,23 +38,90 @@ BUTTONS2 = {}
 SPELL_CHECK = {}
 temp.IMDB_CAP.clear()
 
+IGNORE_WORDS = {"movie", "mkv", "plz", "Hindi movie", ".mkv", "request", "dedo", "dedo bhai", "language", "series", "please", "film", "full"}
+QUALITY_WORDS = {"360p", "480p", "720p", "1080p", "1440p", "2160p", "4k"}
+
+def smart_query_cleaner(text: str):
+    if not text:
+        return None
+
+    import re
+
+    text = text.lower().strip()
+
+    # normalize
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+
+    if not text:
+        return None
+
+    words = text.split()
+
+    # ❌ only ignore words
+    if all(w in IGNORE_WORDS for w in words):
+        return None
+
+    # ❌ only quality
+    if all(w in QUALITY_WORDS for w in words):
+        return None
+
+    # ❌ only number (BUT allow if multiple words যেমন: "96 2018")
+    if len(words) == 1 and words[0].isdigit():
+        return None
+
+    # ❌ only year
+    if len(words) == 1 and re.fullmatch(r"(19|20)\d{2}", words[0]):
+        return None
+
+    # ❌ only season / episode patterns
+    season_ep_pattern = re.compile(
+        r"^(s\d{1,2}|e\d{1,3}|ep\d{1,3}|episode\d{1,3}|season\d{1,2})$",
+        re.IGNORECASE
+    )
+
+    if all(season_ep_pattern.fullmatch(w) for w in words):
+        return None
+
+    # ❌ total meaningful chars < 4
+    joined = "".join(words)
+    if len(joined) < 4:
+        return None
+
+    # ✅ remove ignore words
+    words = [w for w in words if w not in IGNORE_WORDS]
+
+    if not words:
+        return None
+
+    return " ".join(words)
+
 def is_series_query(search: str):
     return bool(
-        re.search(r"s\d{1,2}\s*e\d{1,3}", search, re.IGNORECASE) or
-        re.search(r"s\d{1,2}e\d{1,3}", search, re.IGNORECASE) or
+        re.search(r"s\d{1,2}\s*(e|ep|episode)?\s*\d{1,3}", search, re.IGNORECASE) or
         re.search(r"s\d{1,2}", search, re.IGNORECASE) or
-        re.search(r"season\s*\d{1,2}", search, re.IGNORECASE)
+        re.search(r"season\s*\d{1,2}", search, re.IGNORECASE) or
+        re.search(r"\b\d{1,2}\b$", search)
     )
 
 def episode_to_season(search: str):
     return re.sub(
-        r"(s\d{1,2}\s*e\d{1,3}|s\d{1,2}e\d{1,3}|e\d{1,3})",
+        r"(s\d{1,2}\s*(e|ep|episode)\s*\d{1,3}|s\d{1,2}(e|ep)\d{1,3}|(e|ep|episode)\s*\d{1,3})",
         lambda m: re.search(r"s\d{1,2}", m.group(0), re.IGNORECASE).group(0)
         if re.search(r"s\d{1,2}", m.group(0), re.IGNORECASE)
         else "",
         search,
         flags=re.IGNORECASE
     ).strip()
+
+def normalize_season_format(search: str):
+    # season 5 → s05
+    search = re.sub(r"season[\s\-\:\._]*(\d{1,2})", r"s\1", search, flags=re.IGNORECASE)
+
+    # s5 → s05
+    search = re.sub(r"\bs(\d)\b", r"s0\1", search, flags=re.IGNORECASE)
+
+    return search
 
 def season_to_title(search: str):
     search = re.sub(r"season\s*\d{1,2}", "", search, flags=re.IGNORECASE)
@@ -63,33 +130,39 @@ def season_to_title(search: str):
 
 async def series_fallback_search(chat_id, search):
 
-    # 1️⃣ check if series ধরনের query
+    # 🔥 normalize first
+    search = normalize_season_format(search)
+
     if not is_series_query(search):
         return [], 0, 0, search
 
-    # 2️⃣ Episode → Season
+    # 1️⃣ Episode → Season
     season_query = episode_to_season(search)
 
     if season_query and season_query != search:
         files, offset, total = await get_search_results(
             chat_id, season_query, offset=0, filter=True
         )
-
         if files:
             return files, offset, total, season_query
 
-    # 3️⃣ Season → Title
+    # 2️⃣ Season → Title
     title_query = season_to_title(search)
 
     if title_query and title_query != search:
         files, offset, total = await get_search_results(
             chat_id, title_query, offset=0, filter=True
         )
-
         if files:
             return files, offset, total, title_query
 
     return [], 0, 0, search
+
+def has_year(search: str):
+    return bool(re.search(r"\b(19|20)\d{2}\b", search))
+
+def remove_year(search: str):
+    return re.sub(r"\b(19|20)\d{2}\b", "", search).strip()
 
 def generate_search_variants(query: str):
     if not query:
@@ -116,6 +189,29 @@ def generate_search_variants(query: str):
 
     # duplicate remove
     return list(dict.fromkeys(variants))
+
+async def year_fallback_search(chat_id, search):
+
+    if not has_year(search):
+        return [], 0, 0, search
+
+    new_search = remove_year(search)
+    new_search = re.sub(r"\s+", " ", new_search).strip()
+
+    if not new_search or new_search == search:
+        return [], 0, 0, search
+
+    files, offset, total = await get_search_results(
+        chat_id,
+        new_search,
+        offset=0,
+        filter=True
+    )
+
+    if files:
+        return files, offset, total, new_search
+
+    return [], 0, 0, search
 
 async def symbol_fallback_search(chat_id, search):
     # 1️⃣ original search
@@ -1888,6 +1984,10 @@ async def auto_filter(client, msg, spoll=False):
             if len(message.text) < 100:
                 message_text = message.text or ""
                 search = message_text.lower()
+                search = smart_query_cleaner(search)
+
+                if not search:
+                    return
                 m = await message.reply_text(f"<b><i> 𝖲𝖾𝖺𝗋𝖼𝗁𝗂𝗇𝗀 𝖿𝗈𝗋 '{search}' 🔎</i></b>")
                 find = search.split(" ")
                 search = ""
@@ -1901,7 +2001,6 @@ async def auto_filter(client, msg, spoll=False):
                 search = re.sub(r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|bro|bruh|broh|helo|that|find|dubbed|link|venum|iruka|pannunga|pannungga|anuppunga|anupunga|anuppungga|anupungga|film|undo|kitti|kitty|tharu|kittumo|kittum|movie|any(one)|with\ssubtitle(s)?)", "", search, flags=re.IGNORECASE)
                 search = search.replace("-", " ")
                 search = re.sub(r"[:']", "", search)
-                search = re.sub(r"\s+", " ", search).strip()
                 files, offset, total_results, search = await symbol_fallback_search(
                     message.chat.id,
                     search
@@ -1911,6 +2010,12 @@ async def auto_filter(client, msg, spoll=False):
                         message.chat.id,
                         search
                     )
+                if not files:
+                    files, offset, total_results, search = await year_fallback_search(
+                        message.chat.id,
+                        search
+                    )
+                search = re.sub(r"\s+", " ", search).strip()
                 settings = await get_settings(message.chat.id)
                 if not files:
                     if settings.get("spell_check"):
