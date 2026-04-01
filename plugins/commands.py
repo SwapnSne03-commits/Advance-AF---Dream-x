@@ -161,10 +161,10 @@ def clean_special_words(text: str) -> str:
 
     cleaned = text
 
-    # 🔥 Remove HTML tags
-    cleaned = re.sub(r"</?[^>]+>", "", cleaned)
+    # ❌ REMOVE THIS (HTML tag remove করবে না)
+    # cleaned = re.sub(r"</?[^>]+>", "", cleaned)
 
-    # 🔥 Remove unwanted words
+    # 🔥 Remove unwanted words only
     for word in REMOVED_SPC_WORD:
         cleaned = re.sub(
             re.escape(word),
@@ -173,11 +173,13 @@ def clean_special_words(text: str) -> str:
             flags=re.IGNORECASE
         )
 
-    # 🔥 Fix spaces & newlines
+    # 🔥 ONLY clean spaces (newline touch করবে না)
     cleaned = re.sub(r"[ \t]+", " ", cleaned)
-    cleaned = re.sub(r"\n+", "\n", cleaned).strip()
 
-    return cleaned
+    # ❌ REMOVE THIS (double newline preserve করতে হবে)
+    # cleaned = re.sub(r"\n+", "\n", cleaned)
+
+    return cleaned.strip()
 
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
