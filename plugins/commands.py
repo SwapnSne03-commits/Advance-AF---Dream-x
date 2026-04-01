@@ -389,7 +389,7 @@ async def start(client, message):
                         chat_id=message.from_user.id,
                         cover=cover,
                         file_id=file_id,
-                        caption=clean_special_words(fallback_caption)
+                        caption=clean_special_words(fallback_caption),
                         protect_content=settings.get('file_secure', PROTECT_CONTENT),
                         reply_markup=InlineKeyboardMarkup(btn)
                     )
