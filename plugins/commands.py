@@ -365,7 +365,7 @@ async def start(client, message):
                     original_caption = files1.caption
                     fallback_caption = original_caption if original_caption else title
                     settings = await get_settings(int(grp_id))
-                    DREAMX_CAPTION = settings.get('caption', CUSTOM_FILE_CAPTION)
+                    DREAMX_CAPTION = CUSTOM_FILE_CAPTION
                     if DREAMX_CAPTION:
                         try:
                             f_caption = DREAMX_CAPTION.format(
@@ -435,7 +435,7 @@ async def start(client, message):
                 size=get_size(file.file_size)
                 f_caption = f"<code>{title}</code>"
                 settings = await get_settings(int(grp_id))
-                DREAMX_CAPTION = settings.get('caption', CUSTOM_FILE_CAPTION)
+                DREAMX_CAPTION = CUSTOM_FILE_CAPTION
                 if DREAMX_CAPTION:
                     try:
                         f_caption = DREAMX_CAPTION.format(
@@ -470,7 +470,7 @@ async def start(client, message):
         original_caption = files.caption
         fallback_caption = original_caption if original_caption else title
         settings = await get_settings(int(grp_id))            
-        DREAMX_CAPTION = settings.get('caption', CUSTOM_FILE_CAPTION)
+        DREAMX_CAPTION = CUSTOM_FILE_CAPTION
         if DREAMX_CAPTION:
             try:
                 f_caption = DREAMX_CAPTION.format(file_name=title or "",file_size=size or "",file_caption=fallback_caption)
