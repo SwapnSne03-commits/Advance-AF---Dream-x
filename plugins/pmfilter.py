@@ -38,6 +38,59 @@ BUTTONS2 = {}
 SPELL_CHECK = {}
 temp.IMDB_CAP.clear()
 
+def is_series_query(search: str):
+    return bool(
+        re.search(r"s\d{1,2}\s*e\d{1,3}", search, re.IGNORECASE) or
+        re.search(r"s\d{1,2}e\d{1,3}", search, re.IGNORECASE) or
+        re.search(r"s\d{1,2}", search, re.IGNORECASE) or
+        re.search(r"season\s*\d{1,2}", search, re.IGNORECASE)
+    )
+
+def episode_to_season(search: str):
+    return re.sub(
+        r"(s\d{1,2}\s*e\d{1,3}|s\d{1,2}e\d{1,3}|e\d{1,3})",
+        lambda m: re.search(r"s\d{1,2}", m.group(0), re.IGNORECASE).group(0)
+        if re.search(r"s\d{1,2}", m.group(0), re.IGNORECASE)
+        else "",
+        search,
+        flags=re.IGNORECASE
+    ).strip()
+
+def season_to_title(search: str):
+    search = re.sub(r"season\s*\d{1,2}", "", search, flags=re.IGNORECASE)
+    search = re.sub(r"s\d{1,2}", "", search, flags=re.IGNORECASE)
+    return re.sub(r"\s+", " ", search).strip()
+
+async def series_fallback_search(chat_id, search):
+
+    # 1️⃣ check if series ধরনের query
+    if not is_series_query(search):
+        return [], 0, 0, search
+
+    # 2️⃣ Episode → Season
+    season_query = episode_to_season(search)
+
+    if season_query and season_query != search:
+        files, offset, total = await get_search_results(
+            chat_id, season_query, offset=0, filter=True
+        )
+
+        if files:
+            return files, offset, total, season_query
+
+    # 3️⃣ Season → Title
+    title_query = season_to_title(search)
+
+    if title_query and title_query != search:
+        files, offset, total = await get_search_results(
+            chat_id, title_query, offset=0, filter=True
+        )
+
+        if files:
+            return files, offset, total, title_query
+
+    return [], 0, 0, search
+
 def generate_search_variants(query: str):
     if not query:
         return []
@@ -1853,6 +1906,11 @@ async def auto_filter(client, msg, spoll=False):
                     message.chat.id,
                     search
                 )
+                if not files:
+                    files, offset, total_results, search = await series_fallback_search(
+                        message.chat.id,
+                        search
+                    )
                 settings = await get_settings(message.chat.id)
                 if not files:
                     if settings.get("spell_check"):
