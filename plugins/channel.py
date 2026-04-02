@@ -257,7 +257,7 @@ def extract_media_info(filename: str, caption: str):
 
     language = detect_languages(f"{caption_clean} {filename}")
 
-    season, episode = extract_season_episode(filename)
+    season, episode = extract_season_episode(caption_clean or filename)
     is_combined = False
 
     combined_keywords = [
@@ -724,17 +724,12 @@ def generate_movie_message(movie_doc, base_name):
         epi_block = ""
 
         if primary_tag == "#SERIES" and season_data:
-            epi_block = f"""
-
-🔅 Sᴇᴀsᴏɴ : {season_str}
-🔹 Eᴘɪsᴏᴅᴇs :
-{chr(10).join(episode_lines)}
-"""
+            epi_block = f"🔅 Sᴇᴀsᴏɴ : {season_str}\n🔹 Eᴘɪsᴏᴅᴇs :\n{chr(10).join(episode_lines)}"
 
     # Genres
     genres = movie_doc.get("genres", "N/A")
 
-    return script.MOVIE_UPDATE_NOTIFY_TXT.format(
+    text = script.MOVIE_UPDATE_NOTIFY_TXT.format(
         poster_url=movie_doc.get("poster_url", ""),
         imdb_url=movie_doc.get("imdb_url", ""),
         filename=base_name,
@@ -747,4 +742,8 @@ def generate_movie_message(movie_doc, base_name):
         episodes=epi_block,
         rating=movie_doc.get("rating", "N/A"),
         search_link=temp.B_LINK
-    )+ f"\n\n<b>ᴜᴘʟᴏᴀᴅᴇᴅ ʙʏ - <a href='https://t.me/Graduate_Movies'>Graduate Movies</a></b>\n<b>📅 {date_str}  ⏱️{time_str}</b>"
+    )
+    text += f"\n\n<b>ᴜᴘʟᴏᴀᴅᴇᴅ ʙʏ - <a href='https://t.me/Graduate_Movies'>Graduate Movies</a></b>\n<b>📅 {date_str}  ⏱️{time_str}</b>"
+    text = re.sub(r'\n{3,}', '\n\n', text)
+
+    return text
