@@ -183,18 +183,18 @@ def clean_special_words(text: str) -> str:
 
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
-    try:
-        stick_id = "CAACAgUAAxkBAAEKwzFpxnU7J6fYWjc-ZPPLZoGpdmzsHQACmgADyJRkFCxl4eFc7yVqHgQ"
-        try:
-            sticker = await message.reply_sticker(sticker=stick_id)
-        except Exception as e:
-            logger.exception("reply_sticker failed: %s", e)
-        if EMOJI_MODE:
-            try:
-                await message.react(emoji=random.choice(REACTIONS), big=True)
-            except Exception:
-                await message.react(emoji="👀")
-                pass
+    #try:
+        #stick_id = "CAACAgUAAxkBAAEKwzFpxnU7J6fYWjc-ZPPLZoGpdmzsHQACmgADyJRkFCxl4eFc7yVqHgQ"
+        #try:
+           # sticker = await message.reply_sticker(sticker=stick_id)
+      #  except Exception as e:
+          #  logger.exception("reply_sticker failed: %s", e)
+       # if EMOJI_MODE:
+           # try:
+              #  await message.react(emoji=random.choice(REACTIONS), big=True)
+          #  except Exception:
+                #await message.react(emoji="👀")
+              #  pass
         m = message
         if len(m.command) == 2 and m.command[1].startswith(('notcopy', 'sendall')):
             _, userid, verify_id, file_id = m.command[1].split("_", 3)
@@ -262,8 +262,8 @@ async def start(client, message):
             buttons = [[
                         InlineKeyboardButton('🔰 ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ 🔰', url=f'http://t.me/{temp.U_NAME}?startgroup=true')
                     ],[
-                        InlineKeyboardButton(' ʜᴇʟᴘ 📢', callback_data='help'),
-                        InlineKeyboardButton(' ᴀʙᴏᴜᴛ 📖', callback_data='about')
+                        InlineKeyboardButton(' Hᴇʟᴘ', callback_data='help'),
+                        InlineKeyboardButton(' Aʙᴏᴜᴛ', callback_data='about')
                     #],[
                        # InlineKeyboardButton('ᴛᴏᴘ sᴇᴀʀᴄʜɪɴɢ ⭐', callback_data="topsearch"),
                         #InlineKeyboardButton('ᴜᴘɢʀᴀᴅᴇ 🎟', callback_data="premium_info"),
@@ -295,8 +295,8 @@ async def start(client, message):
             buttons = [[
                         InlineKeyboardButton('🔰 ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ 🔰', url=f'http://t.me/{temp.U_NAME}?startgroup=true')
                     ],[
-                        InlineKeyboardButton(' ʜᴇʟᴘ 📢', callback_data='help'),
-                        InlineKeyboardButton(' ᴀʙᴏᴜᴛ 📖', callback_data='about')
+                        InlineKeyboardButton(' Hᴇʟᴘ ', callback_data='help'),
+                        InlineKeyboardButton(' Aʙᴏᴜᴛ', callback_data='about')
                    # ],[
                       #  InlineKeyboardButton('ᴛᴏᴘ sᴇᴀʀᴄʜɪɴɢ ⭐', callback_data="topsearch"),
                        # InlineKeyboardButton('ᴜᴘɢʀᴀᴅᴇ 🎟', callback_data="premium_info"),
@@ -418,9 +418,9 @@ async def start(client, message):
                         reply_markup = InlineKeyboardMarkup(btn)
                     photo = random.choice(FSUB_PICS) if FSUB_PICS else "https://graph.org/file/7478ff3eac37f4329c3d8.jpg"
                     caption = (
-                        f"👋 ʜᴇʟʟᴏ {message.from_user.mention}\n\n"
-                        "🛑 ʏᴏᴜ ᴍᴜsᴛ ᴊᴏɪɴ ᴛʜᴇ ʀᴇǫᴜɪʀᴇᴅ ᴄʜᴀɴɴᴇʟs ᴛᴏ ᴄᴏɴᴛɪɴᴜᴇ.\n"
-                        "👉 ᴊᴏɪɴ ᴀʟʟ ᴛʜᴇ ʙᴇʟᴏᴡ ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴛʀʏ ᴀɢᴀɪɴ."
+                        f"𝐇𝐞𝐲 {message.from_user.mention}\n\n"
+                        "𝐘𝐨𝐮 𝐌𝐮𝐬𝐭 𝐉𝐨𝐢𝐧 𝐓𝐡𝐞 𝐁𝐞𝐥𝐨𝐰 𝐂𝐡𝐚𝐧𝐧𝐞𝐥𝐬 𝐓𝐨 𝐀𝐜𝐜𝐞𝐬𝐬 𝐌𝐞.\n"
+                        "𝐒𝐨 𝐉𝐨𝐢𝐧 𝐀𝐥𝐥 𝐓𝐡𝐞 𝐂𝐡𝐚𝐧𝐧𝐞𝐥𝐬 𝐀𝐧𝐝 𝐓𝐫𝐲 𝐀𝐠𝐚𝐢𝐧."
                     )
                     await message.reply_photo(
                         photo=photo,
