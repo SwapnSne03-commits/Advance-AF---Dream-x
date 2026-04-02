@@ -202,25 +202,23 @@ def extract_ott_platform(text: str) -> str:
     return " | ".join(platforms) if platforms else "N/A"
 
 def extract_season_episode(filename: str):
-    # 🔥 Season detect (even without episode)
+    # 🔥 Season detect (fallback)
     season_match = re.search(r'\bS(?:eason)?\s*0*(\d{1,2})\b', filename, re.IGNORECASE)
     season = int(season_match.group(1)) if season_match else None
 
-    # Episode range (EP 01-05)
+    # 🔥 FIX: E(06-07) support (highest priority)
+    if m := EP_BRACKET_RANGE.search(filename):
+        return int(m.group(1)), f"{int(m.group(2))}-{int(m.group(3))}"
+
+    # 🔥 Normal EP range (EP 01-05)
     if m := EP_ONLY_RANGE.search(filename):
         return season or 1, f"{int(m.group(1))}-{int(m.group(2))}"
 
-    # Other patterns
-    for pattern in (RANGE_REGEX, SINGLE_REGEX, NAMED_REGEX):
-        if m := pattern.search(filename):
-            season = int(m.group(1))
-            if pattern == RANGE_REGEX:
-                ep = f"{m.group(2)}-{m.group(3)}"
-            else:
-                ep = m.group(2)
-            return season, ep
+    # 🔥 Single episode
+    if m := re.search(r'\bS(\d{1,2})E(\d{1,3})\b', filename, re.IGNORECASE):
+        return int(m.group(1)), str(int(m.group(2)))
 
-    # 🔥 IMPORTANT: season return even if no episode
+    # 🔥 fallback
     return season, None
 
 def schedule_update(bot, base_name, delay=5):
@@ -272,9 +270,9 @@ def extract_media_info(filename: str, caption: str):
     def clean_text(s):
         return unicodedata.normalize("NFKD", s).lower()
 
-    text_check = clean_text(f"{filename} {caption_clean}")
+    text_check = clean_text(caption_clean or filename)
 
-    if re.search(r'\b(combined|complete|full|batch|pack)\b', text_check):
+    if re.search(r'\b(combined|complete|full\s+series|season\s+complete|batch|pack)\b', text_check):
         is_combined = True
     if season is not None:
         tag = "#SERIES"
@@ -303,6 +301,9 @@ def extract_media_info(filename: str, caption: str):
     base_name = re.sub(r'\bx26[45]\b', '', base_name, flags=re.IGNORECASE)
     base_name = re.sub(r'\bx\d+\b', '', base_name, flags=re.IGNORECASE)
     base_name = re.sub(r'\s+', ' ', base_name).strip()
+    # 🔥 FIX: same series merge (ignore year)
+    if tag == "#SERIES":
+        base_name = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
     base_name = base_name.strip(" .-_")
 
     if year and year not in base_name:
