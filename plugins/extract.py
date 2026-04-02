@@ -5,6 +5,7 @@ import aiofiles
 import tempfile
 import uuid
 import requests
+import platform
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -16,6 +17,11 @@ from info import BIN_CHANNEL
 from dreamxbotz.util.file_properties import get_name
 
 logger = logging.getLogger(__name__)
+
+if platform.system() == "Windows":
+    lib_path = os.path.abspath("MediaInfo.dll")
+else:
+    lib_path = "/usr/lib/x86_64-linux-gnu/libmediainfo.so.0"
 
 # Telegraph init
 TELEGRAPH_ACCESS_TOKEN = os.environ.get("TELEGRAPH_ACCESS_TOKEN") or "38a8ac190ac77ad863fa0c3fa98bdf0bb563fa200211b168062e5313b401"
@@ -108,7 +114,7 @@ async def extract_data_handler(client: Client, query: CallbackQuery):
             async for chunk in client.stream_media(log_msg, limit=chunk_limit):
                 await f.write(chunk)
 
-        lib_path = os.path.abspath("MediaInfo.dll") if os.path.exists("MediaInfo.dll") else None
+        #lib_path = os.path.abspath("MediaInfo.dll") if os.path.exists("MediaInfo.dll") else None
 
         media_info = await asyncio.wait_for(
             asyncio.to_thread(MediaInfo.parse, temp_path, library_file=lib_path),
