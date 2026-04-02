@@ -44,9 +44,9 @@ CAPTION_LANGUAGES = {
     "kan": "Kannada", "kannada": "Kannada",
     "tel": "Telugu", "telugu": "Telugu",
     "mal": "Malayalam", "malayalam": "Malayalam",
-    "eng": "English", "english": "English",
+    "eng": "English", "english": "English", "eng.": "English",
     "pun": "Punjabi", "punjabi": "Punjabi",
-    "ben": "Bengali", "bengali": "Bengali",
+    "ben": "Bengali", "bengali": "Bengali", "bangla": "Bengali",
     "mar": "Marathi", "marathi": "Marathi",
     "guj": "Gujarati", "gujarati": "Gujarati",
     "urd": "Urdu", "urdu": "Urdu",
@@ -93,19 +93,35 @@ locks = defaultdict(asyncio.Lock)
 pending_updates = {}
 error_tmdb = False
 
+def detect_languages(text):
+    found = set()
+    text = text.lower()
+
+    for key, value in CAPTION_LANGUAGES.items():
+        pattern = r'\b' + re.escape(key) + r'\b'
+        if re.search(pattern, text):
+            found.add(value)
+
+    return ", ".join(sorted(found)) if found else "N/A"
+
 def extract_title_upto_year_or_season(text: str) -> str:
     if not text:
         return text
 
-    # 🔥 season আগে check
-    season_match = re.search(r'\bS(?:eason)?\s*0*\d{1,2}\b', text, re.I)
-    if season_match:
-        return text[:season_match.start()]
+    # 🔥 season + episode detect (strongest)
+    match = re.search(r'\bS\d{1,2}E\d{1,3}\b', text, re.I)
+    if match:
+        return text[:match.start()]
 
-    # 🔥 year check
-    year_match = re.search(r'\b(19|20)\d{2}\b', text)
-    if year_match:
-        return text[:year_match.end()]
+    # 🔥 season detect
+    match = re.search(r'\bS(?:eason)?\s*0*\d{1,2}\b', text, re.I)
+    if match:
+        return text[:match.start()]
+
+    # 🔥 year detect
+    match = re.search(r'\b(19|20)\d{2}\b', text)
+    if match:
+        return text[:match.end()]
 
     return text
 
@@ -118,6 +134,7 @@ def clean_title_advanced(name: str) -> str:
     name = re.sub(r'\bS\d{1,2}\b', ' ', name, flags=re.I)
     name = re.sub(r'\bE\d{1,3}\b', ' ', name, flags=re.I)
     name = re.sub(r'\bEp(?:isode)?\s*\d+\b', ' ', name, flags=re.I)
+    name = re.sub(r'\bS\d{1,2}E\d{1,2}\b', '', name, flags=re.IGNORECASE)
 
     # 🔥 remove quality/format
     name = QUALITY_PATTERN.sub(" ", name)
@@ -238,8 +255,7 @@ def extract_media_info(filename: str, caption: str):
         format_type = get_format(filename.lower())
     ott_platform = extract_ott_platform(f"{filename} {caption_clean}")
 
-    lang_keys = {k for k in CAPTION_LANGUAGES if k in caption_clean or k in filename.lower()}
-    language = ", ".join(sorted({CAPTION_LANGUAGES[k] for k in lang_keys})) if lang_keys else "N/A"
+    language = detect_languages(f"{caption_clean} {filename}")
 
     season, episode = extract_season_episode(filename)
     is_combined = False
@@ -701,7 +717,10 @@ def generate_movie_message(movie_doc, base_name):
                     ep_str = "COMBINED"
             episode_lines.append(f"S{s} : {ep_str if ep_str else 'COMBINED'}")
 
-        epi_block = f"""
+        epi_block = ""
+
+        if primary_tag == "#SERIES" and season_data:
+            epi_block = f"""
 
 🔅 Sᴇᴀsᴏɴ : {season_str}
 🔹 Eᴘɪsᴏᴅᴇs :
@@ -724,8 +743,4 @@ def generate_movie_message(movie_doc, base_name):
         episodes=epi_block,
         rating=movie_doc.get("rating", "N/A"),
         search_link=temp.B_LINK
-    )+ f"""
-
-    <b>ᴜᴘʟᴏᴀᴅᴇᴅ ʙʏ - <a href="https://t.me/Graduate_Movies">Graduate Movies</a></b>
-    <b>📅 {date_str}  ⏱️{time_str}</b>
-    """
+    )+ f"\n\n<b>ᴜᴘʟᴏᴀᴅᴇᴅ ʙʏ - <a href='https://t.me/Graduate_Movies'>Graduate Movies</a></b>\n<b>📅 {date_str}  ⏱️{time_str}</b>"
