@@ -1,7 +1,10 @@
 FROM python:3.12.2
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends mediainfo libmediainfo0v5 ca-certificates && \
+    apt-get install -y --no-install-recommends \
+    mediainfo \
+    libmediainfo-dev \
+    ca-certificates && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
