@@ -137,7 +137,7 @@ def clean_caption_for_db(text: str) -> str:
 
     # clean extra spaces কিন্তু newline রাখবে
     text = re.sub(r'[ \t]+', ' ', text)
-    text = re.sub(r'\n+', '\n', text).strip()
+    text = re.sub(r'\n{3,}', '\n\n', text).strip()
     text = re.sub(r'\bb\b', '', text)
 
     return text
