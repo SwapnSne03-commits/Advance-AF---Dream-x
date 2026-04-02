@@ -33,7 +33,7 @@ class script(object):
 </b>"""
 
     ABOUT_TXT = """<b>╭────[⚡ ᴍʏ ᴅᴇᴛᴀɪʟs ⚡]────⍟
-├⍟ 🎭 Mʏ Nᴀᴍᴇ : {}
+├⍟ 🎭 Mʏ Nᴀᴍᴇ : <a href="https://t.me/{}">{}</a>
 ├⍟ 🤖 Cʀᴇᴀᴛᴏʀ : <a href="{}">Sᴡᴀᴘɴᴏɴɪʟ ࿐</a>
 ├⍟ 🕵️‍♂️ Uᴘᴅᴀᴛᴇs : <a href='https://t.me/Graduate_Movies'>Gʀᴀᴅᴜᴀᴛᴇ Mᴏᴠɪᴇs ⚡</a>
 ├⍟ ⚙️ Bᴏᴛ Sᴇʀᴠᴇʀ : Lᴏᴄᴀʟ Sᴇʀᴠᴇʀ ⌛ 
