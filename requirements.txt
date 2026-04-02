@@ -10,7 +10,7 @@ shortzy
 pytz
 aiohttp
 telegraph
-pymediainfo-pyrofork
+pymediainfo
 
 # Other tools
 opencv-python-headless==4.8.1.78
