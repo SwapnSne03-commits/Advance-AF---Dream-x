@@ -35,10 +35,10 @@ COVERX = bool(environ.get('COVERX', False)) # Use cover image for indexed files 
 PICS_URL = (environ.get('PICS', '')).split() #random anime girl img each time from aniwallpaper (Experimental)
 PICS = (environ.get('PICS', 'https://i.ibb.co/G62BfhM/photo-2025-12-12-02-06-06-7582787047673298968.jpg https://i.ibb.co/DHjPQKDT/photo-2025-12-22-05-05-09-7586552209278500880.jpg https://i.ibb.co/ymWWLd2D/photo-2025-12-22-05-05-09-7586543967236259856.jpg https://i.ibb.co/VYmt4TDS/photo-2025-12-22-05-04-30-7586543829797306372.jpg https://i.ibb.co/9mHqK8Sn/photo-2025-12-22-05-05-00-7586552114789220396.jpg https://i.ibb.co/HfRbmQZy/photo-2025-12-22-05-05-08-7586552076134514732.jpg https://i.ibb.co/TMMZdB5S/photo-2025-12-22-05-05-00-7586552050364710916.jpg https://i.ibb.co/MD6wT06K/photo-2025-12-22-05-05-09-7586552011710005264.jpg https://i.ibb.co/MyyTgQMn/photo-2025-12-22-05-04-59-7586551981645234216.jpg https://i.ibb.co/jkNrTM7h/photo-2025-12-22-05-05-07-7586551947285495828.jpg https://i.ibb.co/wNm9v1fM/photo-2025-12-22-05-05-07-7586544010185932804.jpg https://i.ibb.co/ymWWLd2D/photo-2025-12-22-05-05-09-7586543967236259856.jpg')).split() 
 NOR_IMG = environ.get("NOR_IMG", "https://graph.org/file/62efbcc4e7580b76530ba.jpg")
-MELCOW_VID = environ.get("MELCOW_VID", "https://graph.org/file/e215d12bfd4fa2155e90e.mp4")
+MELCOW_PHOTO = environ.get("MELCOW_VID", "https://graph.org/file/e215d12bfd4fa2155e90e.mp4")
 SPELL_IMG = environ.get("SPELL_IMG", "https://graph.org/file/13702ae26fb05df52667c.jpg")
 SUBSCRIPTION = (environ.get('SUBSCRIPTION', 'https://i.ibb.co/69DZpdH/photo-2025-12-22-05-03-15-7586543743897960488.jpg'))
-FSUB_IMG = (environ.get('FSUB_IMG', 'https://i.ibb.co/cShkPjcZ/x.jpg')).split()
+FSUB_PICS = (environ.get('FSUB_IMG', 'https://i.ibb.co/cShkPjcZ/x.jpg')).split()
 
 # ============================
 # Admin, Channels & Users Configuration
