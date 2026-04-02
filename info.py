@@ -125,6 +125,7 @@ THREE_VERIFY_GAP = int(environ.get('THREE_VERIFY_GAP', "54000"))
 GRP_LNK = environ.get('GRP_LNK', 'https://t.me/graduate_request_pro') # Group link for the bot
 OWNER_LNK = environ.get('OWNER_LNK', 'https://t.me/yours_swap_bot') # Owner link for the bot
 UPDATE_CHNL_LNK = environ.get('UPDATE_CHNL_LNK', 'https://t.me/graduate_movies') # Update channel link for the bot
+SUPPORT_GRP = environ.get('SUPPORT_GRP', 'https://t.me/Graduate_Request')
 
 # ============================
 # User Configuration
