@@ -704,9 +704,13 @@ def generate_movie_message(movie_doc, base_name):
             combined = data["combined"]
 
             if eps:
-                sorted_eps = sorted(eps)
-                start, end = sorted_eps[0], sorted_eps[-1]
-                ep_str = f"{start}-{end}"
+                sorted_eps = sorted(set(eps))  # 🔥 duplicate safety
+
+                if len(sorted_eps) == 1:
+                    ep_str = f"{sorted_eps[0]}"
+                else:
+                    start, end = sorted_eps[0], sorted_eps[-1]
+                    ep_str = f"{start}-{end}"
             else:
                 ep_str = ""
 
@@ -715,7 +719,7 @@ def generate_movie_message(movie_doc, base_name):
                     ep_str = f"{ep_str}, COMBINED"
                 else:
                     ep_str = "COMBINED"
-            episode_lines.append(f"S{s} : {ep_str if ep_str else 'COMBINED'}")
+            episode_lines.append(f"S{s:02} : {ep_str if ep_str else 'COMBINED'}")
 
         epi_block = ""
 
