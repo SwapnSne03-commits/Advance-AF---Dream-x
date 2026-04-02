@@ -183,7 +183,7 @@ def clean_special_words(text: str) -> str:
 
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
-    #try:
+    try:
         #stick_id = "CAACAgUAAxkBAAEKwzFpxnU7J6fYWjc-ZPPLZoGpdmzsHQACmgADyJRkFCxl4eFc7yVqHgQ"
         #try:
            # sticker = await message.reply_sticker(sticker=stick_id)
