@@ -256,11 +256,27 @@ def listx_to_str(k):
         result = result[:int(MAX_LIST_ELM)]
     
     return ', '.join(result) if result else "N/A"
+
+def clean_search_query(title: str) -> str:
+    if not title:
+        return title
+
+    # remove season/episode patterns
+    title = re.sub(r'\bS\d{1,2}\b', '', title, flags=re.I)
+    title = re.sub(r'\bSeason\s*\d{1,2}\b', '', title, flags=re.I)
+    title = re.sub(r'\bE\d{1,3}\b', '', title, flags=re.I)
+    title = re.sub(r'\bEpisode\s*\d+\b', '', title, flags=re.I)
+    title = title.replace(",", "")
     
+    # clean spaces
+    title = re.sub(r'\s+', ' ', title).strip()
+
+    return title
+
 async def get_poster(query, bulk=False, id=False, file=None):
     if not id:
         query = (query.strip()).lower()
-        title = query
+        title = clean_search_query(query)
         year_val = None
         
         year_list = re.findall(r'[1-2]\d{3}$', query, re.IGNORECASE)
