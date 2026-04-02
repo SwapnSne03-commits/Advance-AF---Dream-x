@@ -104,32 +104,12 @@ def detect_languages(text):
 
     return ", ".join(sorted(found)) if found else "N/A"
 
-def extract_title_upto_year_or_season(text: str) -> str:
-    if not text:
-        return text
-
-    # 🔥 season + episode detect (strongest)
-    match = re.search(r'\bS\d{1,2}E\d{1,3}\b', text, re.I)
-    if match:
-        return text[:match.start()]
-
-    # 🔥 season detect
-    match = re.search(r'\bS(?:eason)?\s*0*\d{1,2}\b', text, re.I)
-    if match:
-        return text[:match.start()]
-
-    # 🔥 year detect
-    match = re.search(r'\b(19|20)\d{2}\b', text)
-    if match:
-        return text[:match.end()]
-
-    return text
-
 def clean_title_advanced(name: str) -> str:
     if not name:
         return name
 
     # 🔥 remove season/episode
+    name = re.sub(r'\bS\d{1,2}E\d{1,3}\b', ' ', name, flags=re.I)
     name = re.sub(r'\bS\d{1,2}E\d{1,2}\b', ' ', name, flags=re.I)
     name = re.sub(r'\bS\d{1,2}\b', ' ', name, flags=re.I)
     name = re.sub(r'\bE\d{1,3}\b', ' ', name, flags=re.I)
@@ -159,6 +139,27 @@ def clean_title_advanced(name: str) -> str:
     name = re.sub(r'\s+', ' ', name).strip()
 
     return name
+
+def extract_title_upto_year_or_season(text: str) -> str:
+    if not text:
+        return text
+
+    # 🔥 S02E01 strongest priority
+    match = re.search(r'\bS\d{1,2}E\d{1,3}\b', text, re.I)
+    if match:
+        return text[:match.start()]
+
+    # 🔥 Season fallback
+    match = re.search(r'\bS(?:eason)?\s*\d{1,2}\b', text, re.I)
+    if match:
+        return text[:match.start()]
+
+    # 🔥 Year fallback
+    match = re.search(r'\b(19|20)\d{2}\b', text)
+    if match:
+        return text[:match.end()]
+
+    return text
 
 def clean_mentions_links(text: str) -> str:
     return CLEAN_PATTERN.sub("", text or "").strip()
@@ -241,7 +242,7 @@ def extract_media_info(filename: str, caption: str):
     tag = "#MOVIE"
     processed_raw = base_raw = filename
     # 🔥 caption priority (MAIN FIX)
-    source_text = caption if caption else filename
+    source_text = caption_clean if caption_clean else filename
     source_text = normalize(clean_mentions_links(source_text))
 
     # 🔥 cut after year/season
@@ -277,18 +278,7 @@ def extract_media_info(filename: str, caption: str):
         is_combined = True
     if season is not None:
         tag = "#SERIES"
-        if m := (RANGE_REGEX.search(filename) or SINGLE_REGEX.search(filename) or NAMED_REGEX.search(filename) or EP_ONLY_RANGE.search(filename)):
-            match_str = m.group(0)
-            start_idx = filename.lower().find(match_str.lower())
-            end_idx = start_idx + len(match_str)
-            processed_raw = filename[:end_idx]
-            base_raw = filename[:start_idx]
-            if year_match := YEAR_PATTERN.search(filename.lower()[end_idx:]):
-                y = year_match.group(0)
-                yi = filename.lower().find(y, end_idx)
-                if yi != -1:
-                    processed_raw = filename[:yi+4]
-                    base_raw += f" {y}"
+
     else:
         if year_match := YEAR_PATTERN.search(unified):
             year = year_match.group(0)
@@ -305,10 +295,16 @@ def extract_media_info(filename: str, caption: str):
                     base_raw = processed_raw
 
     base_name = normalize(remove_ignored_words(normalize(base_raw)))
+    base_name = clean_title_advanced(base_name)
+    base_name = re.sub(r'\bS\d{1,2}E\d{1,3}\b', '', base_name, flags=re.I)
+    base_name = re.sub(r'\bS\d{1,2}\b', '', base_name, flags=re.I)
+    base_name = re.sub(r'\bE\d{1,3}\b', '', base_name, flags=re.I)
     base_name = re.sub(r'\b\d+bit\b', '', base_name, flags=re.IGNORECASE)
     base_name = re.sub(r'\bx26[45]\b', '', base_name, flags=re.IGNORECASE)
     base_name = re.sub(r'\bx\d+\b', '', base_name, flags=re.IGNORECASE)
     base_name = re.sub(r'\s+', ' ', base_name).strip()
+    base_name = base_name.strip(" .-_")
+
     if year and year not in base_name:
         base_name += f" {year}"
 
