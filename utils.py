@@ -136,16 +136,27 @@ async def is_check_admin(bot, chat_id, user_id):
         return member.status in [enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]
     except:
         return False
-    
+
+SEARCH_BTN = InlineKeyboardMarkup(
+    [
+        [
+            InlineKeyboardButton(
+                "🔍 ᴄʟɪᴄᴋ ʜᴇʀᴇ ᴛᴏ sᴇᴀʀᴄʜ",
+                url="https://t.me/Graduate_Request_Pro"
+            )
+        ]
+    ]
+)
+
 async def users_broadcast(user_id, message, is_pin):
     try:
-        m=await message.copy(chat_id=user_id)
+        m=await message.copy(chat_id=user_id, reply_markup=SEARCH_BTN)
         if is_pin:
             await m.pin(both_sides=True)
         return True, "Success"
     except FloodWait as e:
         await asyncio.sleep(e.x)
-        return await users_broadcast(user_id, message)
+        return await users_broadcast(user_id, message, is_pin)
     except InputUserDeactivated:
         await db.delete_user(int(user_id))
         logging.info(f"{user_id}-Removed from Database, since deleted account.")
@@ -163,7 +174,7 @@ async def users_broadcast(user_id, message, is_pin):
 
 async def groups_broadcast(chat_id, message, is_pin):
     try:
-        m = await message.copy(chat_id=chat_id)
+        m = await message.copy(chat_id=chat_id, reply_markup=SEARCH_BTN)
         if is_pin:
             try:
                 await m.pin()
@@ -172,7 +183,7 @@ async def groups_broadcast(chat_id, message, is_pin):
         return "Success"
     except FloodWait as e:
         await asyncio.sleep(e.x)
-        return await groups_broadcast(chat_id, message)
+        return await groups_broadcast(chat_id, message, is_pin)
     except Exception as e:
         await db.delete_chat(chat_id)
         return "Error"
