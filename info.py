@@ -32,13 +32,13 @@ INDEX_CAPTION = bool(environ.get('SAVE_CAPTION', True)) # Save caption db when i
 COVERX = bool(environ.get('COVERX', False)) # Use cover image for indexed files (default: True)
 # If you disable it then bot will use a default thumb for all files
 
-PICS_URL = (environ.get('PICS', 'https://api.aniwallpaper.workers.dev/random?type=girl')).split() #random anime girl img each time from aniwallpaper (Experimental)
-PICS = (environ.get('PICS', 'https://graph.org/file/56b5deb73f3b132e2bb73.jpg https://graph.org/file/5303692652d91d52180c2.jpg https://graph.org/file/425b6f46efc7c6d64105f.jpg https://graph.org/file/876867e761c6c7a29855b.jpg')).split()  # Sample pic
-NOR_IMG = environ.get("NOR_IMG", "https://graph.org/file/e20b5fdaf217252964202.jpg")
-MELCOW_PHOTO = environ.get("MELCOW_PHOTO", "https://graph.org/file/56b5deb73f3b132e2bb73.jpg")
+PICS_URL = (environ.get('PICS', '')).split() #random anime girl img each time from aniwallpaper (Experimental)
+PICS = (environ.get('PICS', 'https://i.ibb.co/G62BfhM/photo-2025-12-12-02-06-06-7582787047673298968.jpg https://i.ibb.co/DHjPQKDT/photo-2025-12-22-05-05-09-7586552209278500880.jpg https://i.ibb.co/ymWWLd2D/photo-2025-12-22-05-05-09-7586543967236259856.jpg https://i.ibb.co/VYmt4TDS/photo-2025-12-22-05-04-30-7586543829797306372.jpg https://i.ibb.co/9mHqK8Sn/photo-2025-12-22-05-05-00-7586552114789220396.jpg https://i.ibb.co/HfRbmQZy/photo-2025-12-22-05-05-08-7586552076134514732.jpg https://i.ibb.co/TMMZdB5S/photo-2025-12-22-05-05-00-7586552050364710916.jpg https://i.ibb.co/MD6wT06K/photo-2025-12-22-05-05-09-7586552011710005264.jpg https://i.ibb.co/MyyTgQMn/photo-2025-12-22-05-04-59-7586551981645234216.jpg https://i.ibb.co/jkNrTM7h/photo-2025-12-22-05-05-07-7586551947285495828.jpg https://i.ibb.co/wNm9v1fM/photo-2025-12-22-05-05-07-7586544010185932804.jpg https://i.ibb.co/ymWWLd2D/photo-2025-12-22-05-05-09-7586543967236259856.jpg')).split() 
+NOR_IMG = environ.get("NOR_IMG", "https://graph.org/file/62efbcc4e7580b76530ba.jpg")
+MELCOW_VID = environ.get("MELCOW_VID", "https://graph.org/file/e215d12bfd4fa2155e90e.mp4")
 SPELL_IMG = environ.get("SPELL_IMG", "https://graph.org/file/13702ae26fb05df52667c.jpg")
-SUBSCRIPTION = (environ.get('SUBSCRIPTION', 'https://graph.org/file/242b7f1b52743938d81f1.jpg'))
-FSUB_PICS = (environ.get('FSUB_PICS', 'https://graph.org/file/7478ff3eac37f4329c3d8.jpg https://graph.org/file/56b5deb73f3b132e2bb73.jpg')).split()  # Fsub pic
+SUBSCRIPTION = (environ.get('SUBSCRIPTION', 'https://i.ibb.co/69DZpdH/photo-2025-12-22-05-03-15-7586543743897960488.jpg'))
+FSUB_IMG = (environ.get('FSUB_IMG', 'https://i.ibb.co/cShkPjcZ/x.jpg')).split()
 
 # ============================
 # Admin, Channels & Users Configuration
@@ -50,8 +50,8 @@ LOG_CHANNEL = int(environ.get('LOG_CHANNEL', '-1002900228022'))  # Log channel i
 BIN_CHANNEL = int(environ.get('BIN_CHANNEL', '-1002900228022'))  # Bin channel id (make sure bot is admin)
 PREMIUM_LOGS = int(environ.get('PREMIUM_LOGS', '-1002900228022'))  # Premium logs channel id
 DELETE_CHANNELS = [int(dch) if id_pattern.search(dch) else dch for dch in environ.get('DELETE_CHANNELS', '-1002900228022').split()] #(make sure bot is admin)
-support_chat_id = environ.get('SUPPORT_CHAT_ID', '--5081430581')  # Support group id (make sure bot is admin)
-reqst_channel = environ.get('REQST_CHANNEL_ID', '-1003444288916')  # Request channel id (make sure bot is admin)
+support_chat_id = environ.get('SUPPORT_CHAT_ID', '-5081430581')  # Support group id (make sure bot is admin)
+reqst_channel = environ.get('REQST_CHANNEL_ID', '-1002900228022')  # Request channel id (make sure bot is admin)
 SUPPORT_CHAT = environ.get('SUPPORT_CHAT', 'https://t.me/Graduate_Request')  # Support group link (make sure bot is admin)
 
 # FORCE_SUB 
@@ -61,7 +61,7 @@ auth_channels     = environ.get("AUTH_CHANNELS", "-1002612579654")# Channels for
 # ============================
 # Payment Configuration
 # ============================
-QR_CODE = environ.get('QR_CODE', 'https://graph.org/file/e419f801841c2ee3db0fc.jpg')    # QR code image for payments
+QR_CODE = environ.get('QR_CODE', '')    # QR code image for payments
 OWNER_UPI_ID = environ.get('OWNER_UPI_ID', 'ɴᴏ ᴀᴠᴀɪʟᴀʙʟᴇ ʀɪɢʜᴛ ɴᴏᴡ')    # Owner UPI ID for payments
 
 STAR_PREMIUM_PLANS = {
@@ -85,7 +85,7 @@ DATABASE_URI2 = environ.get('DATABASE_URI2', "")  # MongoDB URI for the second d
 # ============================
 # Movie Notification & Update Settings
 # ============================
-MOVIE_UPDATE_NOTIFICATION = bool(environ.get('MOVIE_UPDATE_NOTIFICATION', False))  # Notification On (True) / Off (False)
+MOVIE_UPDATE_NOTIFICATION = bool(environ.get('MOVIE_UPDATE_NOTIFICATION', True))  # Notification On (True) / Off (False)
 MOVIE_UPDATE_CHANNEL = int(environ.get('MOVIE_UPDATE_CHANNEL', '-1002900228022'))  # Notification of sent to your channel
 DREAMXBOTZ_IMAGE_FETCH = bool(environ.get('DREAMXBOTZ_IMAGE_FETCH', True))  # On (True) / Off (False)
 LINK_PREVIEW = bool(environ.get('LINK_PREVIEW', False)) # Shows link preview in notification msg instead of image
@@ -188,27 +188,7 @@ LANGUAGES = {
     "ᴋᴀɴɴᴀᴅᴀ": "kan",
 }
 
-BAD_WORDS = {
-    "PrivateMovieZ",
-    "toonworld4all",
-    "themoviesboss",
-    "1tamilmv",
-    "tamilblasters",
-    "1tamilblasters",
-    "skymovieshd",
-    "extraflix",
-    "hdm2",
-    "moviesmod",
-    "hdhub4u",
-    "mkvcinemas",
-    "primefix",
-    "join",
-    "www",
-    "villa",
-    "tg",
-    "original"
-} # Set of bad words to filter out
-   
+BAD_WORDS = ["Hdhub4u", "cinevood", "skymoviedHD", "katmoviefix", "hdmovie2.productions", "hdmovie2", "4khdhub", "Toonworld4all", "TW4ALL", "ExtraFlix", "Hdhub", "Movies", "Movies4u", "movies4u", "Vegamovies", "extraflix", "hdholly", "Filmy4wap", "Filmu4cab", "Tamilmv", "CineVood", "Hub4u", "Hub4", "SkymoviesHD", "Skymovieshd", "telegram", "tg", "TG", "Telegram", "HdWebMovies", "mkvcinemas", "mkvCinemas", "mkvking", "5moviez", "hdm2", "mkvcinema", "1tamil", "1tamilmv", "1Tamil", "1tamilblaster", "1TamilBlaster", "Moviez", "moviez", "yts mx", "YTS", "YTS MX", "mkvCinem", "filmyzilla", "filmzilla", "CineVood", "BT MOVIES HD", "FILMSCLUB04", "XDMovies", "mp4movies", "mp4moviez", "MLWBD", "MLSBD", "mlsbd", "mlwbd", "FibWatch", "fibwatch", "Joya9tv", "joya9tv", "Cinedoze", "CineDoze", "cinedoze", "world4u", "SSRMovies", "SSRmovies", "5MovieRulz", "FilmyCab", "fib watch", "katmovieHD", "katmovie", "moviebazz"] #remove words form file name 
 
 # ============================
 # Server & Web Configuration
