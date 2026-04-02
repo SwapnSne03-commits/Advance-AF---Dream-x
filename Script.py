@@ -234,17 +234,16 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
     
     MOVIE_UPDATE_NOTIFY_TXT = """
 <blockquote>
-<b><a href="{poster_url}">📥</a> <a href="{imdb_url}">New Files Added</a></b></blockquote>
+<b><a href="{poster_url}">📬</a> <a href="{imdb_url}">New Files Added</a></b></blockquote>
 
-🏷️ <b>Tɪᴛʟᴇ :</b><code>{filename}</code><b>{tag}</b>
+🏷️ <b>Tɪᴛʟᴇ :</b><code>{filename}</code> <b>{tag}</b>
 
 🎭 <b>Gᴇɴʀᴇs : {genres}</b>
 📺 <b>OTT : {ott}</b>
 
 📌 <b>Fᴏʀᴍᴀᴛ : {format}</b> 
 🌿 <b>Qᴜᴀʟɪᴛʏ : {quality}</b> 
-🔉 <b>Aᴜᴅɪᴏ : {language}</b> 
-
+🔉 <b>Aᴜᴅɪᴏ : {language}</b>
 <b>{episodes}</b>
 """
 
