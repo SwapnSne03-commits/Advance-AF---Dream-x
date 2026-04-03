@@ -57,38 +57,67 @@ def is_good_match(query: str, result: str, threshold=0.65):
 
     return SequenceMatcher(None, q, r).ratio() >= threshold
 
+def is_strict_title_match(query: str, result: str) -> bool:
+    if not query or not result:
+        return False
+
+    q_words = re.findall(r'\w+', query.lower())
+    r_words = re.findall(r'\w+', result.lower())
+
+    unmatched = sum(1 for qw in q_words if qw not in r_words)
+
+    # 🔥 long title হলে strict
+    if len(q_words) >= 4:
+        return unmatched <= 1
+
+    # 🔥 short title relax
+    return unmatched <= 1
+
 async def smart_tmdb_logic(q, file=None):
-    # 🔥 1️⃣ STRICT TMDB
+
+    # 🔥 1️⃣ TMDB STRICT
     data = await _fetch_tmdb_data(q, api_key=TMDB_API_KEY or None)
 
     if data:
-        if is_good_match(q, data.get("title"), 0.7):   # stricter
+        tmdb_title = (data.get("title") or "").strip()
+
+        if (
+            is_good_match(q, tmdb_title, 0.7)
+            and is_strict_title_match(q, tmdb_title)
+        ):
             return data
         else:
             data = None
 
-    # 🔥 2️⃣ STRICT IMDb
+    # 🔥 2️⃣ IMDb STRICT
     imdb_data = await get_movie_details(q)
     if imdb_data:
-        if is_good_match(q, imdb_data.get("title"), 0.7):
+        imdb_title = (imdb_data.get("title") or "").strip()
+
+        if is_good_match(q, imdb_title, 0.7):
             return imdb_data
 
-    # 🔥 3️⃣ TMDB PARTIAL
+    # 🔥 3️⃣ TMDB PARTIAL (cleaned)
     clean_q = clean_title_for_search(q)
+
     data = await _fetch_tmdb_data(clean_q, api_key=TMDB_API_KEY or None)
 
     if data:
-        if is_good_match(clean_q, data.get("title"), 0.5):
+        tmdb_title = (data.get("title") or "").strip()
+
+        if (
+            is_good_match(clean_q, tmdb_title, 0.6)
+            and is_strict_title_match(clean_q, tmdb_title)
+        ):
             return data
 
     # 🔥 4️⃣ IMDb PARTIAL
     imdb_data = await get_movie_details(clean_q)
     if imdb_data:
-        if is_good_match(clean_q, imdb_data.get("title"), 0.5):
-            return imdb_data
+        return imdb_data
 
-    return None 
-
+    return None
+ 
 #--------------- My Edition Complete ---------------
 
 async def get_session():
