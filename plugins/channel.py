@@ -111,13 +111,11 @@ def clean_title_advanced(name: str) -> str:
     if not name:
         return name
 
-    # 🔥 remove season/episode
+    # 🔥 remove season/episode (single clean block)
     name = re.sub(r'\bS\d{1,2}E\d{1,3}\b', ' ', name, flags=re.I)
-    name = re.sub(r'\bS\d{1,2}E\d{1,2}\b', ' ', name, flags=re.I)
     name = re.sub(r'\bS\d{1,2}\b', ' ', name, flags=re.I)
     name = re.sub(r'\bE\d{1,3}\b', ' ', name, flags=re.I)
     name = re.sub(r'\bEp(?:isode)?\s*\d+\b', ' ', name, flags=re.I)
-    name = re.sub(r'\bS\d{1,2}E\d{1,2}\b', '', name, flags=re.IGNORECASE)
 
     # 🔥 remove quality/format
     name = QUALITY_PATTERN.sub(" ", name)
@@ -126,17 +124,17 @@ def clean_title_advanced(name: str) -> str:
     # 🔥 remove codecs
     name = re.sub(r'\b(x264|x265|h264|h265|hevc)\b', ' ', name, flags=re.I)
 
-    # remove x2 
+    # 🔥 remove x2, x3 etc
     name = re.sub(r'\bx\d{1,3}\b', ' ', name, flags=re.I)
 
     # 🔥 remove audio tags
     name = re.sub(r'\b(ddp?\d+(\.\d+)?)\b', ' ', name, flags=re.I)
 
-    # 🔥 remove extra numbers (but keep year)
-    name = re.sub(r'\b(?!19\d{2}|20\d{2})\d{1,3}\b', ' ', name)
+    # 🔥 remove extra numbers (but KEEP sequel number if before year)
+    name = re.sub(r'\b(?!19\d{2}|20\d{2})\d{3,}\b', ' ', name)
 
-    # 🔥 remove leftover junk words
-    name = re.sub(r'\b(merged|dual|audio|esub|proper|hq)\b', ' ', name, flags=re.I)
+    # 🔥 remove junk words
+    name = re.sub(r'\b(merged|dual|audio|esub|proper|h 264|h 265|hq)\b', ' ', name, flags=re.I)
 
     # clean spaces
     name = re.sub(r'\s+', ' ', name).strip()
