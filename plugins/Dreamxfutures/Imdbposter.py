@@ -51,38 +51,43 @@ def is_good_match(query: str, result: str, threshold=0.65):
     q = re.sub(r'[^a-z0-9 ]', '', query.lower())
     r = re.sub(r'[^a-z0-9 ]', '', result.lower())
 
+    # 🔥 exact শব্দ match bonus
+    if q in r or r in q:
+        return True
+
     return SequenceMatcher(None, q, r).ratio() >= threshold
 
 async def smart_tmdb_logic(q, file=None):
-    clean_q = clean_title_for_search(q)
-
-    # 1️⃣ strict
+    # 🔥 1️⃣ STRICT TMDB
     data = await _fetch_tmdb_data(q, api_key=TMDB_API_KEY or None)
 
     if data:
-        title = data.get("title") or data.get("localized_title") or ""
-        if not is_good_match(q, title, 0.65):
+        if is_good_match(q, data.get("title"), 0.7):   # stricter
+            return data
+        else:
             data = None
 
-    # 2️⃣ cleaned
-    if not data:
-        data = await _fetch_tmdb_data(clean_q, api_key=TMDB_API_KEY or None)
+    # 🔥 2️⃣ STRICT IMDb
+    imdb_data = await get_movie_details(q)
+    if imdb_data:
+        if is_good_match(q, imdb_data.get("title"), 0.7):
+            return imdb_data
 
-        if data:
-            title = data.get("title") or data.get("localized_title") or ""
-            if not is_good_match(clean_q, title, 0.6):
-                data = None
+    # 🔥 3️⃣ TMDB PARTIAL
+    clean_q = clean_title_for_search(q)
+    data = await _fetch_tmdb_data(clean_q, api_key=TMDB_API_KEY or None)
 
-    # 3️⃣ relaxed
-    if not data:
-        data = await _fetch_tmdb_data(clean_q, api_key=TMDB_API_KEY or None)
+    if data:
+        if is_good_match(clean_q, data.get("title"), 0.5):
+            return data
 
-        if data:
-            title = data.get("title") or data.get("localized_title") or ""
-            if not is_good_match(clean_q, title, 0.5):
-                data = None
+    # 🔥 4️⃣ IMDb PARTIAL
+    imdb_data = await get_movie_details(clean_q)
+    if imdb_data:
+        if is_good_match(clean_q, imdb_data.get("title"), 0.5):
+            return imdb_data
 
-    return data
+    return None 
 
 #--------------- My Edition Complete ---------------
 
