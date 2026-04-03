@@ -230,8 +230,7 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
 
 📌 <b>Fᴏʀᴍᴀᴛ : {format}</b> 
 🌿 <b>Qᴜᴀʟɪᴛʏ : {quality}</b> 
-🔉 <b>Aᴜᴅɪᴏ : {language}</b>
-<b>{episodes}</b>
+🔉 <b>Aᴜᴅɪᴏ : {language}</b><b>{episodes}</b>
 """
 
 
