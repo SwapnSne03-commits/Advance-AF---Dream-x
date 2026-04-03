@@ -724,7 +724,7 @@ def generate_movie_message(movie_doc, base_name):
         epi_block = ""
 
         if primary_tag == "#SERIES" and season_data:
-            epi_block = f"🔅 Sᴇᴀsᴏɴ : {season_str}\n🔹 Eᴘɪsᴏᴅᴇs :\n{chr(10).join(episode_lines)}"
+            epi_block = f"\n\n🔅 Sᴇᴀsᴏɴ : {season_str}\n🔹 Eᴘɪsᴏᴅᴇs :\n{chr(10).join(episode_lines)}"
 
     # Genres
     genres = movie_doc.get("genres", "N/A")
