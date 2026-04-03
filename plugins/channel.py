@@ -145,17 +145,17 @@ def extract_title_upto_year_or_season(text: str) -> str:
     if not text:
         return text
 
-    # 🔥 S02E01 strongest priority
+    # Priority 1: SxxExx
     match = re.search(r'\bS\d{1,2}E\d{1,3}\b', text, re.I)
     if match:
         return text[:match.start()]
 
-    # 🔥 Season fallback
+    # Priority 2: Season
     match = re.search(r'\bS(?:eason)?\s*\d{1,2}\b', text, re.I)
     if match:
-        return text[:match.start()]
+        return text[:match.end()]  # include season
 
-    # 🔥 Year fallback
+    # Priority 3: Year (STRICT CUT)
     match = re.search(r'\b(19|20)\d{2}\b', text)
     if match:
         return text[:match.end()]
@@ -178,13 +178,22 @@ def normalize(s: str) -> str:
 
 def remove_ignored_words(text: str) -> str:
     words = text.split()
+    cleaned = []
 
-    cleaned_words = []
-    for word in words:
-        if word.lower() not in IGNORE_WORDS:
-            cleaned_words.append(word)
+    for w in words:
+        lw = w.lower().strip()
 
-    return " ".join(cleaned_words)
+        # exact ignore words remove
+        if lw in IGNORE_WORDS:
+            continue
+
+        # codec / bit junk remove
+        if re.fullmatch(r'(x264|x265|h264|h265|hevc|10bit|8bit)', lw):
+            continue
+
+        cleaned.append(w)
+
+    return " ".join(cleaned)
 
 def get_qualities(text: str) -> str:
     qualities = QUALITY_PATTERN.findall(text)
@@ -234,15 +243,15 @@ def schedule_update(bot, base_name, delay=5):
     )
 def extract_media_info(filename: str, caption: str):
     filename = normalize(clean_mentions_links(filename))
-    caption_clean = clean_mentions_links(caption).lower() if caption else ""
-    unified = f"{caption_clean} {filename.lower()}".strip()
+    caption_clean = clean_mentions_links(caption) if caption else ""
+    unified = caption_clean if caption_clean else filename.lower()
 
     season = episode = year = None
     tag = "#MOVIE"
     processed_raw = base_raw = filename
     # 🔥 caption priority (MAIN FIX)
     source_text = caption_clean if caption_clean else filename
-    source_text = normalize(clean_mentions_links(source_text))
+    #source_text = clean_mentions_links(source_text)
 
     # 🔥 cut after year/season
     source_text = extract_title_upto_year_or_season(source_text)
@@ -284,16 +293,14 @@ def extract_media_info(filename: str, caption: str):
             year_idx = filename.lower().find(year.lower())
             if year_idx != -1:
                 processed_raw = filename[:year_idx + 4]
-                base_raw = processed_raw
         else:
             if qual_match := QUALITY_PATTERN.search(unified):
                 qual_str = qual_match.group(0)
                 qual_idx = filename.lower().find(qual_str.lower())
                 if qual_idx != -1:
                     processed_raw = filename[:qual_idx]
-                    base_raw = processed_raw
 
-    base_name = normalize(remove_ignored_words(normalize(base_raw)))
+    base_name = normalize(remove_ignored_words(base_raw))
     base_name = clean_title_advanced(base_name)
     base_name = re.sub(r'\bS\d{1,2}E\d{1,3}\b', '', base_name, flags=re.I)
     base_name = re.sub(r'\bS\d{1,2}\b', '', base_name, flags=re.I)
@@ -364,9 +371,12 @@ def extract_media_info(filename: str, caption: str):
     base_name = clean_title_advanced(base_name)
 
     # 🔥 better fallback condition
-    if not base_name or len(base_name.split()) <= 1:
-        base_name = normalize(remove_ignored_words(normalize(processed_raw))) or filename
-
+    # ✅ NEW FIX (STRICT CAPTION PRIORITY)
+    if caption_clean:
+        if not base_name or len(base_name.split()) <= 1:
+            base_name = base_raw.strip()
+    else:
+        base_name = normalize(remove_ignored_words(processed_raw)) or filename
     base_name = smart_title(base_name)
 
     return {
