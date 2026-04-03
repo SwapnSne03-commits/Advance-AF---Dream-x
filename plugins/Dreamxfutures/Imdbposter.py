@@ -8,6 +8,7 @@ from datetime import datetime
 from difflib import SequenceMatcher
 from PIL import Image
 from info import DREAMXBOTZ_IMAGE_FETCH, TMDB_API_KEY, MAX_LIST_ELM
+from difflib import SequenceMatcher
 
 logger = logging.getLogger(__name__)
 LONG_IMDB_DESCRIPTION = False
@@ -24,6 +25,66 @@ TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original'
 MIN_RUNTIME = 40
 
 _session: aiohttp.ClientSession | None = None
+
+# My Smert Edit
+def clean_title_for_search(title: str) -> str:
+    if not title:
+        return ""
+
+    title = title.lower()
+    title = re.sub(r'\bS\d{1,2}E\d{1,3}\b', '', title, flags=re.I)
+    title = re.sub(r'\bS\d{1,2}\b', '', title, flags=re.I)
+    title = re.sub(r'\bSeason\s*\d+\b', '', title, flags=re.I)
+
+    title = title.replace(",", "").replace(":", " ").replace("-", " ")
+    title = re.sub(r'\s+', ' ', title).strip()
+    return title
+
+def extract_year(text):
+    m = re.search(r'(19|20)\d{2}', text or "")
+    return m.group(0) if m else None
+
+def is_good_match(query: str, result: str, threshold=0.65):
+    if not query or not result:
+        return False
+
+    q = re.sub(r'[^a-z0-9 ]', '', query.lower())
+    r = re.sub(r'[^a-z0-9 ]', '', result.lower())
+
+    return SequenceMatcher(None, q, r).ratio() >= threshold
+
+async def smart_tmdb_logic(q, file=None):
+    clean_q = clean_title_for_search(q)
+
+    # 1️⃣ strict
+    data = await _fetch_tmdb_data(q, api_key=TMDB_API_KEY or None)
+
+    if data:
+        title = data.get("title") or data.get("localized_title") or ""
+        if not is_good_match(q, title, 0.65):
+            data = None
+
+    # 2️⃣ cleaned
+    if not data:
+        data = await _fetch_tmdb_data(clean_q, api_key=TMDB_API_KEY or None)
+
+        if data:
+            title = data.get("title") or data.get("localized_title") or ""
+            if not is_good_match(clean_q, title, 0.6):
+                data = None
+
+    # 3️⃣ relaxed
+    if not data:
+        data = await _fetch_tmdb_data(clean_q, api_key=TMDB_API_KEY or None)
+
+        if data:
+            title = data.get("title") or data.get("localized_title") or ""
+            if not is_good_match(clean_q, title, 0.5):
+                data = None
+
+    return data
+
+#--------------- My Edition Complete ---------------
 
 async def get_session():
     global _session
@@ -478,7 +539,7 @@ async def get_movie_detailsx(query, id=False, file=None):
     """
     q = str(query).strip()
     try:
-        data = await _fetch_tmdb_data(q, api_key=TMDB_API_KEY or None)
+        data = await smart_tmdb_logic(q, file=file)
         if not data:
             logger.warning(f"TMDB returned no results for '{q}' → switching to IMDb fallback")
             return await get_movie_details(q)
