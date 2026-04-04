@@ -39,7 +39,7 @@ SPELL_CHECK = {}
 temp.IMDB_CAP.clear()
 
 IGNORE_WORDS = [
-    "movies", "movie", "episode", "episodes", "south indian", "south indian movie",
+    "movies", "480p", "720p", "1080p", "session", "movie", "episode", "episodes", "south indian", "south indian movie",
     "south movie", "south indian", "web-series", "web series", "webseries", "hindi me bhejo",
     "ful", "!", "kro", "jaldi", "audio", "language", "mkv", "mp4", "web", "series",
     "hollywood", "all", "bollywood", "south", "hd", "karo", "upload", "bhejo",
