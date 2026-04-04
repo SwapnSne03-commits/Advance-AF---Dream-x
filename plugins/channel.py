@@ -17,8 +17,10 @@ from pymongo.errors import PyMongoError, DuplicateKeyError
 from pyrogram.errors import MessageIdInvalid, MessageNotModified, FloodWait
 from typing import Optional, Tuple
 
+send_lock = asyncio.Lock()
 logger = logging.getLogger(__name__)
 
+STICKER_ID = "CAACAgUAAxkBAAEKd5VpthsjL9E74ohrob_PFCyCnZkrogAC5BgAAsPXaFdQUxyzFlooKh4E"
 FALLBACK_POSTER = "https://i.ibb.co/JFjcKPRb/photo-2026-04-04-02-38-04-7624727897239978028.jpg"
 # Precomputed sets for faster lookups
 IGNORE_WORDS = {
@@ -525,6 +527,7 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
         schedule_update(bot, base_name)
 
 async def send_movie_update(bot, base_name):
+    async with send_lock:
     max_retries = 3
     base_delay = 5
     for attempt in range(max_retries):
@@ -573,6 +576,14 @@ async def send_movie_update(bot, base_name):
                 {"_id": base_name},
                 {"$set": {"message_id": msg.id, "is_photo": is_photo}}
             )
+            try:
+                await bot.send_sticker(
+                    chat_id=MOVIE_UPDATE_CHANNEL,
+                    sticker=STICKER_ID
+                )
+            except Exception as e:
+                logger.warning(f"Sticker send failed: {e}")
+            await asyncio.sleep(2)
             return msg
         except FloodWait as e:
             wait_time = e.value + 2
