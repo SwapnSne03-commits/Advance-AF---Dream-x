@@ -27,6 +27,37 @@ MIN_RUNTIME = 40
 _session: aiohttp.ClientSession | None = None
 
 # My Smert Edit
+def parse_tmdb_field(raw, field_type=None):
+    """
+    Normalize TMDB / IMDb field into list of strings.
+    Handles string, list, dict-list formats safely.
+    """
+
+    if not raw:
+        return []
+
+    # 🔹 string হলে
+    if isinstance(raw, str):
+        return [s.strip() for s in raw.split(',')]
+
+    # 🔹 list হলে
+    if isinstance(raw, list):
+        # TMDB dict list
+        if raw and isinstance(raw[0], dict):
+            if field_type == 'genres':
+                return [i.get('name') for i in raw if i.get('name')]
+            elif field_type == 'languages':
+                return [i.get('english_name') for i in raw if i.get('english_name')]
+            elif field_type == 'countries':
+                return [i.get('name') for i in raw if i.get('name')]
+            else:
+                # cast, director etc.
+                return [i.get('name') for i in raw if i.get('name')]
+        else:
+            return raw
+
+    return []
+
 def clean_title_for_search(title: str) -> str:
     if not title:
         return ""
@@ -682,11 +713,11 @@ async def get_movie_detailsx(query, id=False, file=None, is_series=False):
     details['tmdb_url'] = data.get('url')
     
     for key in ('genres', 'languages', 'countries'):
-        raw = data.get(key)
-        details[key] = [s.strip() for s in raw.split(',')] if raw else []
+        details[key] = parse_tmdb_field(data.get(key), key)
+
+    # 🔹 people fields
     for role in ('director', 'writer', 'producer', 'composer', 'cinematographer', 'cast'):
-        raw = data.get(role)
-        details[role] = [s.strip() for s in raw.split(',')] if raw else []
+        details[role] = parse_tmdb_field(data.get(role))
         
     details['plot'] = data.get('plot')
     details['tagline'] = data.get('tagline')
