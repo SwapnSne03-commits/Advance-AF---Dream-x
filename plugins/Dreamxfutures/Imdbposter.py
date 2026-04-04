@@ -719,11 +719,22 @@ async def get_movie_detailsx(query, id=False, file=None, is_series=False):
     details['runtime'] = data.get('runtime')
     details['certificates'] = data.get('certificates')
     details['tmdb_url'] = data.get('url')
-    # 🔹 IMDb / TMDB URL FIX
-    if data.get('imdb_id'):
+    # 🔹 IMDb / TMDB URL FIX 🔥 TMDB PRIORITY LINK SYSTEM
+    if data.get('url'):
+        # TMDB always first
+        details['imdb_url'] = data.get('url')
+
+    elif data.get('imdb_id'):
+        # fallback IMDb
         details['imdb_url'] = f"https://www.imdb.com/title/{data.get('imdb_id')}"
+
     else:
-        details['imdb_url'] = data.get('url')  # fallback TMDB url
+    # last fallback (rare)
+        try:
+            imdb_fallback = await get_movie_details(q)
+            details['imdb_url'] = imdb_fallback.get("url") if imdb_fallback else None
+        except:
+            details['imdb_url'] = None
     # 🔹 list/string safe parsing
     for key in ('genres', 'languages', 'countries'):
         details[key] = parse_tmdb_field(data.get(key), key)
