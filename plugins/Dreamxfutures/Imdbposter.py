@@ -150,7 +150,7 @@ async def get_best_series_match(clean_q: str):
 
 async def smart_tmdb_logic(q, file=None, is_series=False):
 
-    clean_q, is_series = enhance_query_for_tmdb(q)
+    clean_q, detected_series = enhance_query_for_tmdb(q)
     is_series = is_series or detected_series
     # 🔥 SERIES PRIORITY
     if is_series:
