@@ -566,6 +566,12 @@ async def old_get_movie_details(query, id=False, file=None):
         return None
 """
 
+def safe_float(val):
+    try:
+        return round(float(val), 1)
+    except:
+        return None
+
 async def get_movie_detailsx(query, id=False, file=None):
     """
     Primary movie details fetcher using direct TMDB API calls.
@@ -586,7 +592,7 @@ async def get_movie_detailsx(query, id=False, file=None):
     details['title'] = data.get('title') or data.get('localized_title')
     details['year'] = (data.get('year', 0)) if data.get('year') else None
     details['release_date'] = data.get('release_date')
-    details['rating'] = round(float(data.get('rating', 0)), 1) if data.get('rating') is not None else None
+    details['rating'] = safe_float(data.get('rating'))
     details['votes'] = int(data.get('votes', 0))
     details['runtime'] = data.get('runtime')
     details['certificates'] = data.get('certificates')
