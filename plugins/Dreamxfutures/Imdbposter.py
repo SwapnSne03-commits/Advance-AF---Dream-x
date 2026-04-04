@@ -148,9 +148,10 @@ async def get_best_series_match(clean_q: str):
 
     return None
 
-async def smart_tmdb_logic(q, file=None):
+async def smart_tmdb_logic(q, file=None, is_series=False):
 
     clean_q, is_series = enhance_query_for_tmdb(q)
+    is_series = is_series or detected_series
     # 🔥 SERIES PRIORITY
     if is_series:
         data = await get_best_series_match(clean_q)
@@ -654,14 +655,14 @@ def safe_float(val):
     except:
         return None
 
-async def get_movie_detailsx(query, id=False, file=None):
+async def get_movie_detailsx(query, id=False, file=None, is_series=False):
     """
     Primary movie details fetcher using direct TMDB API calls.
     Falls back to IMDb-based get_movie_details() on failure.
     """
     q = str(query).strip()
     try:
-        data = await smart_tmdb_logic(q, file=file)
+        data = await smart_tmdb_logic(q, file=file, is_series=is_series)
         if not data:
             logger.warning(f"TMDB returned no results for '{q}' → switching to IMDb fallback")
             return await get_movie_details(q)
