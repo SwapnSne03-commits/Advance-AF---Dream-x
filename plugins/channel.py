@@ -19,6 +19,7 @@ from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+FALLBACK_POSTER = "https://i.ibb.co/JFjcKPRb/photo-2026-04-04-02-38-04-7624727897239978028.jpg"
 # Precomputed sets for faster lookups
 IGNORE_WORDS = {
     "rarbg", "dub", "sub", "sample", "mkv", "aac", "combined",
@@ -95,6 +96,10 @@ MEDIA_FILTER = filters.document | filters.video | filters.audio
 locks = defaultdict(asyncio.Lock)
 pending_updates = {}
 error_tmdb = False
+
+def get_safe_poster(movie_doc): #Fallback Poster 
+    FALLBACK_POSTER = "https://i.ibb.co/JFjcKPRb/photo-2026-04-04-02-38-04-7624727897239978028.jpg"
+    return movie_doc.get("poster_url") or FALLBACK_POSTER
 
 def detect_languages(text):
     found = set()
@@ -536,8 +541,9 @@ async def send_movie_update(bot, base_name):
                 )
             ]])
             size=(2560, 1440) if LANDSCAPE_POSTER and TMDB_POSTER and movie_doc.get("is_backdrop") and not movie_doc.get("error_tmdb") else (853, 1280)
-            if movie_doc.get("poster_url") and not LINK_PREVIEW:
-                resized_poster = await fetch_image(movie_doc["poster_url"], size)
+            if not LINK_PREVIEW:
+                poster_url = get_safe_poster(movie_doc)
+                resized_poster = await fetch_image(poster_url, size)
                 msg = await bot.send_photo(
                     chat_id=MOVIE_UPDATE_CHANNEL,
                     photo=resized_poster,
