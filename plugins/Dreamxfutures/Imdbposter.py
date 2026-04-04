@@ -169,11 +169,18 @@ async def get_best_series_match(clean_q: str):
                 best_match = r
 
         if best_match and best_score >= 0.6:
-            return await _fetch_media_details(
+            data = await _fetch_media_details(
                 'tv',
                 best_match['id'],
                 api_key=TMDB_API_KEY or None
             )
+
+            # 🔥 IMPORTANT FIX (must add)
+            data['tmdb_id'] = best_match['id']
+            data['media_type'] = 'tv'
+            data['url'] = f"https://www.themoviedb.org/tv/{best_match['id']}"
+
+            return data
     except Exception as e:
         logger.error(f"Series priority search failed: {e}")
 
