@@ -692,58 +692,79 @@ async def get_movie_detailsx(query, id=False, file=None, is_series=False):
     Falls back to IMDb-based get_movie_details() on failure.
     """
     q = str(query).strip()
+
     try:
         data = await smart_tmdb_logic(q, file=file, is_series=is_series)
         if not data:
             logger.warning(f"TMDB returned no results for '{q}' → switching to IMDb fallback")
             return await get_movie_details(q)
+
     except Exception as e:
         logger.error(f"TMDB direct call failed → fallback IMDb: {e}")
         return await get_movie_details(q)
 
-    # Normalize fields
+    # 🔹 Normalize fields
     details = {}
+
     details['title'] = data.get('title') or data.get('localized_title')
-    details['year'] = (data.get('year', 0)) if data.get('year') else None
+    details['year'] = data.get('year') if data.get('year') else None
     details['release_date'] = data.get('release_date')
     details['rating'] = safe_float(data.get('rating'))
-    details['votes'] = int(data.get('votes', 0))
+    
+    try:
+        details['votes'] = int(data.get('votes', 0))
+    except:
+        details['votes'] = 0
+
     details['runtime'] = data.get('runtime')
     details['certificates'] = data.get('certificates')
     details['tmdb_url'] = data.get('url')
-    
+
+    # 🔹 list/string safe parsing
     for key in ('genres', 'languages', 'countries'):
         details[key] = parse_tmdb_field(data.get(key), key)
 
-    # 🔹 people fields
     for role in ('director', 'writer', 'producer', 'composer', 'cinematographer', 'cast'):
         details[role] = parse_tmdb_field(data.get(role))
-        
+
     details['plot'] = data.get('plot')
     details['tagline'] = data.get('tagline')
-    details['box_office'] = (data.get('box_office', 0)) if data.get('box_office') else None
+    details['box_office'] = data.get('box_office') if data.get('box_office') else None
+
+    # 🔹 distributors safe
     raw_dist = data.get('distributors')
-    details['distributors'] = [d.strip() for d in raw_dist.split(',')] if raw_dist else []
+    details['distributors'] = parse_tmdb_field(raw_dist)
+
     details['imdb_id'] = data.get('imdb_id')
     details['tmdb_id'] = data.get('tmdb_id')
-    
-    posters = data.get('images', {}).get('posters', {})
-    original_language = data.get('images', {}).get('original_language')
+
+    # 🔥 IMAGE FIX (MAIN IMPORTANT PART)
+    images = data.get('images', {})
+
+    # normalize images (works for both raw + processed)
+    processed_images = _process_images(images)
+
+    posters = processed_images.get('posters', {})
+    backdrops = processed_images.get('backdrops', {})
+    original_language = processed_images.get('original_language')
+
+    # 🔹 Poster
     poster_url = data.get('poster_url')
     if not poster_url:
-        for key in ('en', original_language, 'xx'):
+        for key in ('en', original_language, 'no_lang', 'all'):
             if key and posters.get(key):
                 poster_url = posters[key][0]
                 break
+
     details['poster_url'] = poster_url.replace("/original/", "/w1280/") if poster_url else None
 
-    backdrops = data.get('images', {}).get('backdrops', {})
-    original_language = data.get('images', {}).get('original_language')
+    # 🔹 Backdrop
     backdrop_url = None
-    for key in ('en', original_language, 'xx', 'no_lang'):
+    for key in ('en', original_language, 'no_lang', 'all'):
         if key and backdrops.get(key):
             backdrop_url = backdrops[key][0]
             break
+
     details['backdrop_url'] = backdrop_url.replace("/original/", "/w1280/") if backdrop_url else None
 
     return details
