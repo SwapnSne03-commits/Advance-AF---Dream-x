@@ -719,7 +719,11 @@ async def get_movie_detailsx(query, id=False, file=None, is_series=False):
     details['runtime'] = data.get('runtime')
     details['certificates'] = data.get('certificates')
     details['tmdb_url'] = data.get('url')
-
+    # 🔹 IMDb / TMDB URL FIX
+    if data.get('imdb_id'):
+        details['imdb_url'] = f"https://www.imdb.com/title/{data.get('imdb_id')}"
+    else:
+        details['imdb_url'] = data.get('url')  # fallback TMDB url
     # 🔹 list/string safe parsing
     for key in ('genres', 'languages', 'countries'):
         details[key] = parse_tmdb_field(data.get(key), key)
@@ -742,7 +746,21 @@ async def get_movie_detailsx(query, id=False, file=None, is_series=False):
     images = data.get('images', {})
 
     # normalize images (works for both raw + processed)
-    processed_images = _process_images(images)
+    if isinstance(images, dict) and isinstance(images.get('posters'), list):
+        # raw TMDB → need processing
+        processed_images = _process_images(images)
+
+    elif isinstance(images, dict) and isinstance(images.get('posters'), dict):
+        # already processed → use directly
+        processed_images = images
+
+    else:
+        # fallback safety
+        processed_images = {
+            "posters": {},
+            "backdrops": {},
+            "available_languages": []
+        }
 
     posters = processed_images.get('posters', {})
     backdrops = processed_images.get('backdrops', {})
