@@ -311,7 +311,15 @@ def extract_media_info(filename: str, caption: str):
     base_name = re.sub(r'\s+', ' ', base_name).strip()
     # 🔥 FIX: same series merge (ignore year)
     if tag == "#SERIES":
-        base_name = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
+        base_name = re.sub(r'\b(19|20)\d{2}\b', '', base_name, flags=re.I)
+
+        # remove season patterns (ALL forms)
+        base_name = re.sub(r'(?<!\w)S\d{1,2}(?!\w)', '', base_name, flags=re.I)
+        base_name = re.sub(r'\bSeason\s*\d{1,2}\b', '', base_name, flags=re.I)
+
+        # clean spacing
+        base_name = re.sub(r'\s+', ' ', base_name).strip()
+
     base_name = base_name.strip(" .-_")
 
     if year and year not in base_name:
@@ -330,6 +338,7 @@ def extract_media_info(filename: str, caption: str):
         Remove common season/episode markers from a title while preserving a trailing year.
         Examples removed: S01, s01e02, 1x02, season 1, ep 02, episode 2, part 1
         """
+        name = re.sub(r'[._]+', ' ', name)
         if not name:
             return name
 
@@ -342,9 +351,9 @@ def extract_media_info(filename: str, caption: str):
 
         # Common patterns to remove
         patterns = [
-            r'\bS\d{1,2}E\d{1,2}\b',     # S01E02
-            r'\bS\d{1,2}\b',             # S01
-            r'\bE\d{1,2}\b',             # E02
+            r'(?<!\w)S\d{1,2}E\d{1,2}(?!\w)',
+            r'(?<!\w)S\d{1,2}(?!\w)',
+            r'(?<!\w)E\d{1,2}(?!\w)',
             r'\b\d{1,2}x\d{1,2}\b',      # 1x02
             r'\bSeason\s*\d{1,2}\b',     # Season 1
             r'\bEp(?:isode)?\.?\s*\d{1,3}\b',  # Ep02, Episode 2
@@ -367,16 +376,21 @@ def extract_media_info(filename: str, caption: str):
 
         return name.strip()
 
-    base_name = _strip_season_episode_tokens(base_name)
     base_name = clean_title_advanced(base_name)
+    base_name = _strip_season_episode_tokens(base_name)
+    
 
-    # 🔥 better fallback condition
-    # ✅ NEW FIX (STRICT CAPTION PRIORITY)
+    # 🔥 better fallback condition (CAPTION STRICT)
     if caption_clean:
         if not base_name or len(base_name.split()) <= 1:
             base_name = base_raw.strip()
     else:
         base_name = normalize(remove_ignored_words(processed_raw)) or filename
+
+    # 🔥 RE-CLEAN AFTER FALLBACK
+    base_name = clean_title_advanced(base_name)
+    base_name = _strip_season_episode_tokens(base_name)
+
     base_name = smart_title(base_name)
 
     return {
@@ -392,7 +406,6 @@ def extract_media_info(filename: str, caption: str):
         "is_combined": is_combined,
         "language": language
     }
-
 
 @Client.on_message(filters.chat(CHANNELS) & MEDIA_FILTER)
 async def media_handler(bot, message):
@@ -687,10 +700,10 @@ def generate_movie_message(movie_doc, base_name):
     primary_tag = "#SERIES" if "#SERIES" in all_tags else "#MOVIE"
 
     # Format/Quality/Language
-    format_str = ", ".join(sorted(all_formats)) if all_formats else "N/A"
-    quality_str = ", ".join(sorted(all_qualities)) if all_qualities else "N/A"
-    language_str = ", ".join(sorted(all_languages)) if all_languages else "N/A"
-    ott_str = ", ".join(sorted(all_ott_platforms)) if all_ott_platforms else "N/A"
+    format_str = ", ".join(sorted(all_formats)) if all_formats else "Nᴏ Iᴅᴇᴀ"
+    quality_str = ", ".join(sorted(all_qualities)) if all_qualities else "Nᴏ Iᴅᴇᴀ"
+    language_str = ", ".join(sorted(all_languages)) if all_languages else "Nᴏ Iᴅᴇᴀ"
+    ott_str = ", ".join(sorted(all_ott_platforms)) if all_ott_platforms else "Nᴏ Iᴅᴇᴀ"
 
     # 🔥 MULTI-SEASON LOGIC
     epi_block = ""
