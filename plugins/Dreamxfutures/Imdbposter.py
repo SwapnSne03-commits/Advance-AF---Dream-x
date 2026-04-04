@@ -73,7 +73,89 @@ def is_strict_title_match(query: str, result: str) -> bool:
     # 🔥 short title relax
     return unmatched <= 1
 
+def enhance_query_for_tmdb(q: str):
+    """
+    Enhance query for better TMDB search accuracy.
+    Returns: (clean_query, is_series)
+    """
+    if not q:
+        return "", False
+
+    original_q = q
+    q = q.strip()
+
+    # 🔹 clean base title
+    clean_q = clean_title_for_search(q)
+
+    # 🔹 detect series intent
+    is_series = bool(re.search(r'\b(s\d{1,2}|season|ep|episode)\b', q.lower()))
+
+    # 🔥 if series → add hint
+    if is_series:
+        clean_q = f"{clean_q} season"
+
+    return clean_q, is_series
+
+async def get_best_series_match(clean_q: str):
+    """
+    Search TMDB TV only and return best matched series data.
+    """
+    try:
+        params = {
+            'query': clean_q,
+            'language': 'en-US',
+            'page': 1,
+            'include_adult': 'false'
+        }
+
+        result = await _tmdb_get('search/tv', params=params, api_key=TMDB_API_KEY or None)
+        tv_results = result.get('results', [])
+
+        best_match = None
+        best_score = 0
+
+        for r in tv_results:
+            title = r.get('name', '')
+
+            base_q = clean_q.replace("season", "").strip()
+
+            score = SequenceMatcher(None, base_q.lower(), title.lower()).ratio()
+
+            # 🔥 exact match boost
+            if base_q.lower() == title.lower():
+                score += 0.4
+
+            # 🔥 partial match
+            elif base_q.lower() in title.lower():
+                score += 0.25
+
+            # 🔥 startswith boost
+            if title.lower().startswith(base_q.split()[0]):
+                score += 0.15
+
+            if score > best_score:
+                best_score = score
+                best_match = r
+
+        if best_match and best_score >= 0.6:
+            return await _fetch_media_details(
+                'tv',
+                best_match['id'],
+                api_key=TMDB_API_KEY or None
+            )
+    except Exception as e:
+        logger.error(f"Series priority search failed: {e}")
+
+    return None
+
 async def smart_tmdb_logic(q, file=None):
+
+    clean_q, is_series = enhance_query_for_tmdb(q)
+    # 🔥 SERIES PRIORITY
+    if is_series:
+        data = await get_best_series_match(clean_q)
+        if data:
+            return data
 
     # 🔥 1️⃣ TMDB STRICT
     data = await _fetch_tmdb_data(q, api_key=TMDB_API_KEY or None)
@@ -98,7 +180,7 @@ async def smart_tmdb_logic(q, file=None):
             return imdb_data
 
     # 🔥 3️⃣ TMDB PARTIAL (cleaned)
-    clean_q = clean_title_for_search(q)
+    clean_q, _ = enhance_query_for_tmdb(q)
 
     data = await _fetch_tmdb_data(clean_q, api_key=TMDB_API_KEY or None)
 
