@@ -528,70 +528,70 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
 
 async def send_movie_update(bot, base_name):
     async with send_lock:
-    max_retries = 3
-    base_delay = 5
-    for attempt in range(max_retries):
-        try:
-            movie_doc = await db.movie_updates.find_one({"_id": base_name})
-            if not movie_doc:
-                return None
-
-            text = generate_movie_message(movie_doc, base_name)
-            buttons = InlineKeyboardMarkup([[
-                InlineKeyboardButton(
-                    'ɢᴇᴛ ғɪʟᴇs',
-                    url=f"https://t.me/{temp.U_NAME}?start=getfile-{base_name.replace(' ', '-')}"
-                )
-            ]])
-            poster_url = get_safe_poster(movie_doc)
-            is_fallback = not bool(movie_doc.get("poster_url"))
-           # size=(2560, 1440) if LANDSCAPE_POSTER and TMDB_POSTER and movie_doc.get("is_backdrop") and not movie_doc.get("error_tmdb") else (853, 1280)
-            size = (2560, 1440) if (LANDSCAPE_POSTER and (movie_doc.get("is_backdrop") or is_fallback) and not movie_doc.get("error_tmdb")) else (853, 1280)
-
-            resized_poster = await fetch_image(poster_url, size)
-            if not LINK_PREVIEW:
-                poster_url = get_safe_poster(movie_doc)
-                resized_poster = await fetch_image(poster_url, size)
-                msg = await bot.send_photo(
-                    chat_id=MOVIE_UPDATE_CHANNEL,
-                    photo=resized_poster,
-                    caption=text,
-                    reply_markup=buttons,
-                    parse_mode=enums.ParseMode.HTML
-                )
-                is_photo = True
-            else:
-                send_params = {
-                    "chat_id": MOVIE_UPDATE_CHANNEL,
-                    "text": text,
-                    "reply_markup": buttons,
-                    "parse_mode": enums.ParseMode.HTML
-                }
-                if movie_doc.get("poster_url") and LINK_PREVIEW:
-                    send_params["invert_media"] = ABOVE_PREVIEW
-                msg = await bot.send_message(**send_params)
-                is_photo = False
-
-            await db.movie_updates.update_one(
-                {"_id": base_name},
-                {"$set": {"message_id": msg.id, "is_photo": is_photo}}
-            )
+        max_retries = 3
+        base_delay = 5
+        for attempt in range(max_retries):
             try:
-                await bot.send_sticker(
-                    chat_id=MOVIE_UPDATE_CHANNEL,
-                    sticker=STICKER_ID
+                movie_doc = await db.movie_updates.find_one({"_id": base_name})
+                if not movie_doc:
+                    return None
+
+                text = generate_movie_message(movie_doc, base_name)
+                buttons = InlineKeyboardMarkup([[
+                    InlineKeyboardButton(
+                        'ɢᴇᴛ ғɪʟᴇs',
+                        url=f"https://t.me/{temp.U_NAME}?start=getfile-{base_name.replace(' ', '-')}"
+                    )
+                ]])
+                poster_url = get_safe_poster(movie_doc)
+                is_fallback = not bool(movie_doc.get("poster_url"))
+               # size=(2560, 1440) if LANDSCAPE_POSTER and TMDB_POSTER and movie_doc.get("is_backdrop") and not movie_doc.get("error_tmdb") else (853, 1280)
+                size = (2560, 1440) if (LANDSCAPE_POSTER and (movie_doc.get("is_backdrop") or is_fallback) and not movie_doc.get("error_tmdb")) else (853, 1280)
+
+                resized_poster = await fetch_image(poster_url, size)
+                if not LINK_PREVIEW:
+                    poster_url = get_safe_poster(movie_doc)
+                    resized_poster = await fetch_image(poster_url, size)
+                    msg = await bot.send_photo(
+                        chat_id=MOVIE_UPDATE_CHANNEL,
+                        photo=resized_poster,
+                        caption=text,
+                        reply_markup=buttons,
+                        parse_mode=enums.ParseMode.HTML
+                    )
+                    is_photo = True
+                else:
+                    send_params = {
+                        "chat_id": MOVIE_UPDATE_CHANNEL,
+                        "text": text,
+                        "reply_markup": buttons,
+                        "parse_mode": enums.ParseMode.HTML
+                    }
+                    if movie_doc.get("poster_url") and LINK_PREVIEW:
+                        send_params["invert_media"] = ABOVE_PREVIEW
+                    msg = await bot.send_message(**send_params)
+                    is_photo = False
+
+                await db.movie_updates.update_one(
+                    {"_id": base_name},
+                    {"$set": {"message_id": msg.id, "is_photo": is_photo}}
                 )
+                try:
+                    await bot.send_sticker(
+                        chat_id=MOVIE_UPDATE_CHANNEL,
+                        sticker=STICKER_ID
+                    )
+                except Exception as e:
+                    logger.warning(f"Sticker send failed: {e}")
+                await asyncio.sleep(2)
+                return msg
+            except FloodWait as e:
+                wait_time = e.value + 2
+                await asyncio.sleep(wait_time)
             except Exception as e:
-                logger.warning(f"Sticker send failed: {e}")
-            await asyncio.sleep(2)
-            return msg
-        except FloodWait as e:
-            wait_time = e.value + 2
-            await asyncio.sleep(wait_time)
-        except Exception as e:
-            logger.error(f"Failed to send movie update: {e}")
-            break
-    return None
+                logger.error(f"Failed to send movie update: {e}")
+                break
+        return None
 
 async def update_movie_message(bot, base_name):
     try:
