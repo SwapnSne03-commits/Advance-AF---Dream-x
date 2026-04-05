@@ -186,6 +186,15 @@ async def get_best_series_match(clean_q: str):
 
     return None
 
+def is_very_strict_match(query, result):
+    if not query or not result:
+        return False
+
+    q = re.sub(r'[^a-z0-9 ]', '', query.lower())
+    r = re.sub(r'[^a-z0-9 ]', '', result.lower())
+
+    return SequenceMatcher(None, q, r).ratio() >= 0.85
+
 async def smart_tmdb_logic(q, file=None, is_series=False):
 
     clean_q, detected_series = enhance_query_for_tmdb(q)
@@ -200,7 +209,7 @@ async def smart_tmdb_logic(q, file=None, is_series=False):
     data = await _fetch_tmdb_data(q, api_key=TMDB_API_KEY or None)
 
     if data:
-        tmdb_title = (data.get("title") or "").strip()
+        tmdb_title = (data.get("title") or data.get("name") or "").strip()
 
         if (
             is_good_match(q, tmdb_title, 0.7)
@@ -211,13 +220,67 @@ async def smart_tmdb_logic(q, file=None, is_series=False):
             data = None
 
     # 🔥 2️⃣ IMDb STRICT
+    # 🔥 2️⃣ IMDb STRICT
     imdb_data = await get_movie_details(q)
     if imdb_data:
         imdb_title = (imdb_data.get("title") or "").strip()
 
-        if is_good_match(q, imdb_title, 0.7):
+        if is_very_strict_match(q, imdb_title):
             return imdb_data
+        else:
+            imdb_data = None
 
+    # 🔥 NEW: TMDB RE-SEARCH (movie + all)
+    results = await _tmdb_get(
+        'search/multi',
+        params={
+            'query': clean_q,
+            'language': 'en-US',
+            'page': 1,
+            'include_adult': 'false'
+        },
+        api_key=TMDB_API_KEY or None
+    )
+
+    multi_results = results.get('results', [])
+
+    best_match = None
+    best_score = 0
+
+    for r in multi_results:
+        title = r.get('title') or r.get('name') or ""
+
+        q_clean = re.sub(r'[^a-z0-9 ]', '', clean_q.lower())
+        t_clean = re.sub(r'[^a-z0-9 ]', '', title.lower())
+
+        score = SequenceMatcher(None, q_clean, t_clean).ratio()
+
+        # exact boost
+        if clean_q.lower() == title.lower():
+            score += 0.4
+        elif clean_q.lower() in title.lower():
+            score += 0.25
+
+        # year boost
+        query_year = extract_year(q)
+        release = r.get('release_date') or r.get('first_air_date') or ""
+        year = release[:4] if release else ""
+
+        if query_year and year and query_year == year:
+            score += 0.3
+
+        if score > best_score:
+            best_score = score
+            best_match = r
+
+    # accept strong match
+    if best_match and best_score >= 0.65:
+        data = await _fetch_media_details(
+            best_match.get("media_type", "movie"),
+            best_match["id"],
+            api_key=TMDB_API_KEY or None
+        )
+        return data
     # 🔥 3️⃣ TMDB PARTIAL (cleaned)
     clean_q, _ = enhance_query_for_tmdb(q)
 
@@ -256,7 +319,7 @@ def choose_best_poster_from_processed(posters, backdrops, original_language):
 
     # 🔥 4. ALWAYS try portrait poster before fallback
     for key in ('en', original_language, 'no_lang', 'all'):
-        if key and posters.get(key):
+        if key and posters.get(key) and len(posters[key]) > 0:
             return posters[key][0], "poster"
 
     # 🔥 5. fallback → no_lang backdrop
