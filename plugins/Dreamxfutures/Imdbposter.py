@@ -207,8 +207,12 @@ async def smart_tmdb_logic(q, file=None, is_series=False):
             and is_strict_title_match(q, tmdb_title)
         ):
             return data
-        else:
-            data = None
+        query_year = extract_year(q) #year priority 
+        tmdb_year = str(data.get("year") or "")
+
+        if query_year and tmdb_year and query_year == tmdb_year and len(q.split()) >= 2:
+            return data
+        data = None
 
     # 🔥 2️⃣ IMDb STRICT
     imdb_data = await get_movie_details(q)
@@ -238,7 +242,33 @@ async def smart_tmdb_logic(q, file=None, is_series=False):
         return imdb_data
 
     return None
- 
+
+def choose_best_poster_from_processed(posters, backdrops, original_language):
+    # 🔥 1. EN backdrop
+    if backdrops.get('en'):
+        return backdrops['en'][0], "backdrop"
+
+    # 🔥 2. original language backdrop
+    if original_language and backdrops.get(original_language):
+        return backdrops[original_language][0], "backdrop"
+
+    # 🔥 3. ONLY no_lang (xx) backdrop
+    if backdrops.get('no_lang'):
+        # 👉 portrait try first
+        for key in ('en', original_language, 'no_lang', 'all'):
+            if key and posters.get(key):
+                return posters[key][0], "poster"
+
+        # 👉 fallback to no_lang backdrop
+        return backdrops['no_lang'][0], "backdrop"
+
+    # 🔥 4. no backdrop → try poster
+    for key in ('en', original_language, 'no_lang', 'all'):
+        if key and posters.get(key):
+            return posters[key][0], "poster"
+
+    return None, None
+
 #--------------- My Edition Complete ---------------
 
 async def get_session():
@@ -785,23 +815,20 @@ async def get_movie_detailsx(query, id=False, file=None, is_series=False):
     original_language = processed_images.get('original_language')
 
     # 🔹 Poster
-    poster_url = data.get('poster_url')
-    if not poster_url:
-        for key in ('en', original_language, 'no_lang', 'all'):
-            if key and posters.get(key):
-                poster_url = posters[key][0]
-                break
+    # 🔥 SMART POSTER SELECTION
+    poster, poster_type = choose_best_poster_from_processed(
+        posters, backdrops, original_language
+    )
 
-    details['poster_url'] = poster_url.replace("/original/", "/w1280/") if poster_url else None
-
-    # 🔹 Backdrop
-    backdrop_url = None
-    for key in ('en', original_language, 'no_lang', 'all'):
-        if key and backdrops.get(key):
-            backdrop_url = backdrops[key][0]
-            break
-
-    details['backdrop_url'] = backdrop_url.replace("/original/", "/w1280/") if backdrop_url else None
-
+    if poster:
+        if poster_type == "backdrop":
+            details['backdrop_url'] = poster.replace("/original/", "/w1280/")
+            details['poster_url'] = None
+        else:
+            details['poster_url'] = poster.replace("/original/", "/w1280/")
+            details['backdrop_url'] = None
+    else:
+        details['poster_url'] = None
+        details['backdrop_url'] = None
     return details
 
