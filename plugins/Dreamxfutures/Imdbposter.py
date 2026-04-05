@@ -275,11 +275,17 @@ async def smart_tmdb_logic(q, file=None, is_series=False):
 
     # accept strong match
     if best_match and best_score >= 0.65:
+        media_type = best_match.get("media_type", "movie")
+
         data = await _fetch_media_details(
-            best_match.get("media_type", "movie"),
+            media_type,
             best_match["id"],
             api_key=TMDB_API_KEY or None
         )
+
+        # 🔥 FIX: add URL manually
+        data['url'] = f"https://www.themoviedb.org/{media_type}/{best_match['id']}"
+
         return data
     # 🔥 3️⃣ TMDB PARTIAL (cleaned)
     clean_q, _ = enhance_query_for_tmdb(q)
