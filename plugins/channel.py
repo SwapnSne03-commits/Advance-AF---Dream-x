@@ -138,7 +138,10 @@ def clean_title_advanced(name: str) -> str:
     name = re.sub(r'\b(ddp?\d+(\.\d+)?)\b', ' ', name, flags=re.I)
 
     # 🔥 remove extra numbers (but KEEP sequel number if before year)
-    name = re.sub(r'\b(?!19\d{2}|20\d{2})\d{3,}\b', ' ', name)
+    #name = re.sub(r'\b(?!19\d{2}|20\d{2})\d{3,}\b', ' ', name)
+
+    #⚠️ Only Remove 5 number junk numbers
+    name = re.sub(r'\b\d{5,}\b', ' ', name)
 
     # 🔥 remove junk words
     name = re.sub(r'\b(merged|dual|audio|esub|proper|h 264|h 265|hq)\b', ' ', name, flags=re.I)
