@@ -223,19 +223,22 @@ async def smart_tmdb_logic(q, file=None, is_series=False):
             return imdb_data
 
     # 🔥 3️⃣ TMDB PARTIAL (cleaned)
-    clean_q, _ = enhance_query_for_tmdb(q)
-
-    data = await _fetch_tmdb_data(clean_q, api_key=TMDB_API_KEY or None)
-
     if data:
         tmdb_title = (data.get("title") or "").strip()
 
+        # strict
         if (
             is_good_match(clean_q, tmdb_title, 0.6)
             and is_strict_title_match(clean_q, tmdb_title)
         ):
             return data
 
+        # 🔥 YEAR FIX AGAIN (IMPORTANT)
+        query_year = extract_year(clean_q) or extract_year(q)
+        tmdb_year = str(data.get("year") or "")
+
+        if query_year and tmdb_year and query_year == tmdb_year:
+            return data
     # 🔥 4️⃣ IMDb PARTIAL
     imdb_data = await get_movie_details(clean_q)
     if imdb_data:
@@ -244,6 +247,7 @@ async def smart_tmdb_logic(q, file=None, is_series=False):
     return None
 
 def choose_best_poster_from_processed(posters, backdrops, original_language):
+
     # 🔥 1. EN backdrop
     if backdrops.get('en'):
         return backdrops['en'][0], "backdrop"
@@ -252,21 +256,21 @@ def choose_best_poster_from_processed(posters, backdrops, original_language):
     if original_language and backdrops.get(original_language):
         return backdrops[original_language][0], "backdrop"
 
-    # 🔥 3. ONLY no_lang (xx) backdrop
-    if backdrops.get('no_lang'):
-        # 👉 portrait try first
-        for key in ('en', original_language, 'no_lang', 'all'):
-            if key and posters.get(key):
-                return posters[key][0], "poster"
+    # 🔥 3. other language backdrop (excluding no_lang)
+    for key in backdrops:
+        if key not in ('no_lang', 'all'):
+            return backdrops[key][0], "backdrop"
 
-        # 👉 fallback to no_lang backdrop
-        return backdrops['no_lang'][0], "backdrop"
-
-    # 🔥 4. no backdrop → try poster
+    # 🔥 4. ALWAYS try portrait poster before fallback
     for key in ('en', original_language, 'no_lang', 'all'):
         if key and posters.get(key):
             return posters[key][0], "poster"
 
+    # 🔥 5. fallback → no_lang backdrop
+    if backdrops.get('no_lang'):
+        return backdrops['no_lang'][0], "backdrop"
+
+    # 🔥 6. nothing found
     return None, None
 
 #--------------- My Edition Complete ---------------
