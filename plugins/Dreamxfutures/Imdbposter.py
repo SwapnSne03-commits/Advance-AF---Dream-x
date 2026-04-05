@@ -202,15 +202,18 @@ async def smart_tmdb_logic(q, file=None, is_series=False):
     if data:
         tmdb_title = (data.get("title") or "").strip()
 
+        # 🔥 YEAR PRIORITY FIRST (VERY IMPORTANT)
+        query_year = extract_year(q)
+        tmdb_year = str(data.get("year") or "")
+
+        if query_year and tmdb_year and query_year == tmdb_year and len(q.split()) >= 3:
+            return data
+
+        # 🔥 THEN strict match
         if (
             is_good_match(q, tmdb_title, 0.7)
             and is_strict_title_match(q, tmdb_title)
         ):
-            return data
-        query_year = extract_year(q) #year priority 
-        tmdb_year = str(data.get("year") or "")
-
-        if query_year and tmdb_year and query_year == tmdb_year and len(q.split()) >= 2:
             return data
         data = None
 
@@ -223,22 +226,27 @@ async def smart_tmdb_logic(q, file=None, is_series=False):
             return imdb_data
 
     # 🔥 3️⃣ TMDB PARTIAL (cleaned)
+    clean_q, _ = enhance_query_for_tmdb(q)
+
+    data = await _fetch_tmdb_data(clean_q, api_key=TMDB_API_KEY or None)
+
     if data:
         tmdb_title = (data.get("title") or "").strip()
 
-        # strict
+        # 🔥 YEAR FIRST
+        query_year = extract_year(clean_q) or extract_year(q)
+        tmdb_year = str(data.get("year") or "")
+
+        if query_year and tmdb_year and query_year == tmdb_year and len(clean_q.split()) >= 2:
+            return data
+
+        # 🔥 THEN strict
         if (
             is_good_match(clean_q, tmdb_title, 0.6)
             and is_strict_title_match(clean_q, tmdb_title)
         ):
             return data
-
-        # 🔥 YEAR FIX AGAIN (IMPORTANT)
-        query_year = extract_year(clean_q) or extract_year(q)
-        tmdb_year = str(data.get("year") or "")
-
-        if query_year and tmdb_year and query_year == tmdb_year:
-            return data
+    
     # 🔥 4️⃣ IMDb PARTIAL
     imdb_data = await get_movie_details(clean_q)
     if imdb_data:
