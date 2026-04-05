@@ -433,6 +433,44 @@ async def _fetch_media_details(media_type: str, media_id: int, api_key=None):
     params = {'append_to_response': 'credits,external_ids,alternative_titles,release_dates,images'}
     return await _tmdb_get(f"{media_type}/{media_id}", params=params, api_key=api_key)
 
+def pick_best_candidate(scored_results, year, api_key):
+    strict_candidates = []
+    loose_candidates = []
+
+    for r, ratio in scored_results:
+        mtype = r.get('media_type')
+        rd_str = r.get('release_date') or r.get('first_air_date')
+
+        if not (rd_str and mtype in ['movie', 'tv']):
+            continue
+
+        try:
+            rd_date = datetime.strptime(rd_str, '%Y-%m-%d').date()
+        except:
+            continue
+
+        candidate = {
+            'type': mtype,
+            'id': r['id'],
+            'date': rd_date,
+            'score': r.get('popularity', 0),
+            'ratio': ratio
+        }
+
+        # 🔥 YEAR LOGIC
+        if year:
+            if rd_date.year == year:
+                strict_candidates.append(candidate)
+            elif abs(rd_date.year - year) <= 1:
+                loose_candidates.append(candidate)
+        else:
+            loose_candidates.append(candidate)
+
+    # 🔥 sorting
+    strict_candidates.sort(key=lambda x: (x['ratio'], x['date'], x['score']), reverse=True)
+    loose_candidates.sort(key=lambda x: (x['ratio'], x['date'], x['score']), reverse=True)
+
+    return strict_candidates or loose_candidates
 
 async def _search_media_id(query: str, api_key=None):
     """Search TMDB for the best matching movie/TV show and return (media_type, media_id)."""
@@ -476,6 +514,7 @@ async def _search_media_id(query: str, api_key=None):
     if not scored_results:
         scored_results = [(r, get_ratio(r.get('title') or r.get('name'), title)) for r in multi_results[:10]]
 
+    """
     today = datetime.utcnow().date()
     candidates_past, candidates_upcoming = [], []
     for r, ratio in scored_results:
@@ -488,7 +527,7 @@ async def _search_media_id(query: str, api_key=None):
         except ValueError:
             continue
         if year:
-            if abs(rd_date.year - year) > 1:
+            if rd_date.year != year:
                 continue
         if mtype == 'movie':
             try:
@@ -510,7 +549,16 @@ async def _search_media_id(query: str, api_key=None):
         return None, None
     top = final[0]
     return top['type'], top['id']
+    
+    ⚠️smart year matching add
+    """
+    final = pick_best_candidate(scored_results, year, api_key)
 
+    if not final:
+        return None, None
+
+    top = final[0]
+    return top['type'], top['id']
 
 def _process_images(images_data):
     """Organize poster and backdrop images by language."""
