@@ -332,10 +332,11 @@ def extract_media_info(filename: str, caption: str):
     if tag != "#SERIES" and year and year not in base_name:
         base_name += f" {year}"
 
-    if base_name.endswith(")"):
-        base_name = re.sub(r"\s+\(\d{4}\)$", "", base_name)
-        if year:
-            base_name += f" {year}"
+    base_name = re.sub(r"\s*\(\d{4}\)$", "", base_name).strip()
+
+    if tag == "#SERIES":
+        base_name = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
+    base_name = re.sub(r'\s+', ' ', base_name).strip()
     print("DEBUG:", text_check, is_combined, season, episode)
     # -------------------------
     # NEW: strip season/episode tokens from final base_name
