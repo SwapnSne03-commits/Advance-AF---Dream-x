@@ -546,12 +546,14 @@ async def send_movie_update(bot, base_name):
                 poster_url = get_safe_poster(movie_doc)
                 is_fallback = not bool(movie_doc.get("poster_url"))
                # size=(2560, 1440) if LANDSCAPE_POSTER and TMDB_POSTER and movie_doc.get("is_backdrop") and not movie_doc.get("error_tmdb") else (853, 1280)
-                size = (2560, 1440) if (LANDSCAPE_POSTER and (movie_doc.get("is_backdrop") or is_fallback) and not movie_doc.get("error_tmdb")) else (853, 1280)
+                if is_fallback:
+                    size = (2560, 1440)  # 🔥 always landscape for fallback
+                else:
+                    size = (2560, 1440) if (LANDSCAPE_POSTER and movie_doc.get("is_backdrop") and not movie_doc.get("error_tmdb")) else (853, 1280)
 
+                poster_url = get_safe_poster(movie_doc)
                 resized_poster = await fetch_image(poster_url, size)
                 if not LINK_PREVIEW:
-                    poster_url = get_safe_poster(movie_doc)
-                    resized_poster = await fetch_image(poster_url, size)
                     msg = await bot.send_photo(
                         chat_id=MOVIE_UPDATE_CHANNEL,
                         photo=resized_poster,
