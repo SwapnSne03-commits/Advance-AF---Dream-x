@@ -194,7 +194,7 @@ def remove_ignored_words(text: str) -> str:
     cleaned = []
 
     for w in words:
-        lw = w.lower().strip()
+        lw = re.sub(r'[^a-z0-9]', '', w.lower())
 
         # exact ignore words remove
         if lw in IGNORE_WORDS:
@@ -313,7 +313,7 @@ def extract_media_info(filename: str, caption: str):
                 if qual_idx != -1:
                     processed_raw = filename[:qual_idx]
 
-    base_name = normalize(remove_ignored_words(base_raw))
+    base_name = remove_ignored_words(normalize(base_raw))
     base_name = clean_title_advanced(base_name)
     base_name = re.sub(r'\bS\d{1,2}E\d{1,3}\b', '', base_name, flags=re.I)
     base_name = re.sub(r'\bS\d{1,2}\b', '', base_name, flags=re.I)
