@@ -88,11 +88,8 @@ YEAR_PATTERN = re.compile(r"(?<![A-Za-z0-9])(?:19|20)\d{2}(?![A-Za-z0-9])")
 RANGE_REGEX = re.compile(r'\bS(\d{1,2})[^\w\n\r]*E(?:p(?:isode)?)?0*(\d{1,2})\s*(?:to|-)\s*(?:E(?:p(?:isode)?)?)?0*(\d{1,2})',re.IGNORECASE)
 SINGLE_REGEX = re.compile(r'\bS(\d{1,2})[^\w\n\r]*E(?:p(?:isode)?)?0*(\d{1,3})', re.IGNORECASE)
 NAMED_REGEX = re.compile(r'Season\s*0*(\d{1,2})[\s\-,:]*Ep(?:isode)?\s*0*(\d{1,3})', re.IGNORECASE)
-EP_ONLY_RANGE = re.compile(r'\b(?:EP|Episode)0*(\d{1,3})\s*-\s*0*(\d{1,3})\b',re.IGNORECASE)
-EP_BRACKET_RANGE = re.compile(
-    r'\bS(\d{1,2})\s*E\(?\s*(\d{1,3})\s*-\s*(\d{1,3})\s*\)?',
-    re.IGNORECASE
-)
+EP_ONLY_RANGE = re.compile(r'[\[\(]?\s*(?:E|EP|Episode)\s*0*(\d{1,3})\s*[-–]\s*0*(\d{1,3})\s*[\]\)]?',re.IGNORECASE)
+EP_BRACKET_RANGE = re.compile(r'[\[\(]?\s*S(\d{1,2})\s*E\s*[\(\[]?\s*(\d{1,3})\s*[-–]\s*(\d{1,3})\s*[\)\]]?',re.IGNORECASE)
 
 MEDIA_FILTER = filters.document | filters.video | filters.audio
 locks = defaultdict(asyncio.Lock)
