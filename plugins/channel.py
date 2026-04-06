@@ -162,10 +162,11 @@ def extract_title_upto_year_or_season(text: str) -> str:
     if match:
         return text[:match.end()]  # include season
 
-    # Priority 3: Year (STRICT CUT)
-    match = re.search(r'\b(19|20)\d{2}\b', text)
-    if match:
-        return text[:match.start()]
+    # Priority 3: Year (ONLY IF NO SEASON)
+    if not re.search(r'\bS\d{1,2}\b', text, re.I):
+        match = re.search(r'\b(19|20)\d{2}\b', text)
+        if match:
+            return text[:match.start()]
 
     return text
 
