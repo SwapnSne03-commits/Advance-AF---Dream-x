@@ -329,7 +329,7 @@ def extract_media_info(filename: str, caption: str):
 
     base_name = base_name.strip(" .-_")
 
-    if year and year not in base_name:
+    if tag != "#SERIES" and year and year not in base_name:
         base_name += f" {year}"
 
     if base_name.endswith(")"):
