@@ -292,7 +292,7 @@ async def extract_data_handler(client: Client, query: CallbackQuery):
         <br>
         <i>
         🔺 Provided By
-        <b><a href="https://t.me/DreamxBotz">Graduate Movies</a></b> 🔺
+        <b><a href="https://t.me/Graduate_Movies">Graduate Movies</a></b> 🔺
         </i>
         """
 
