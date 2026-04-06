@@ -43,25 +43,32 @@ def fmt_lang(code):
     if not code:
         return "Unknown"
 
-    code = str(code).lower()
+    code = str(code).strip()
 
+    # 🔥 direct name match (IMPORTANT)
+    name = code.capitalize()
+
+    local = LOCAL_NAMES.get(name)
+
+    if local:
+        return f"{name} ({local})"
+
+    # fallback to pycountry (for eng, hin etc)
     try:
         lang = (
-            pycountry.languages.get(alpha_2=code)
-            or pycountry.languages.get(alpha_3=code)
+            pycountry.languages.get(alpha_2=code.lower())
+            or pycountry.languages.get(alpha_3=code.lower())
         )
 
-        if not lang:
-            return code.upper()
-
-        name = lang.name.replace(" (macrolanguage)", "")
-        local = LOCAL_NAMES.get(name)
-
-        return f"{name} ({local})" if local else name
+        if lang:
+            name = lang.name.replace(" (macrolanguage)", "")
+            local = LOCAL_NAMES.get(name)
+            return f"{name} ({local})" if local else name
 
     except:
-        return code.upper()
+        pass
 
+    return code.upper()
 
 # ======================================
 # Telegraph init (UNCHANGED)
@@ -276,7 +283,7 @@ async def extract_data_handler(client: Client, query: CallbackQuery):
         if video_info:
             html += "🎬 <u><b>Video Track</b></u>"
             for v in video_info:
-                html += f"<blockquote>• <code>{v}</code></blockquote>"
+                html += f"<blockquote>• <pre>{v}</pre></blockquote>"
 
         if audio_tracks:
             html += f"<br>🔊 <u><b>Audio Tracks ({len(audio_tracks)})</b></u>"
