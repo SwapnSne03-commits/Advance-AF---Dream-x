@@ -163,21 +163,51 @@ async def extract_data_handler(client: Client, query: CallbackQuery):
 
             # ================= VIDEO =================
             if ttype == "video":
-                width = track.width or "?"
-                height = track.height or "?"
+                width = track.width or 0
+                height = track.height or 0
 
-                bitrate = ""
+                # Resolution
+                resolution = f"{width}x{height}" if width and height else "Unknown"
+
+                # Quality detect
+                quality = "Unknown"
+                try:
+                    h = int(height)
+                    if h >= 2160:
+                        quality = "2160p"
+                    elif h >= 1440:
+                        quality = "1440p"
+                    elif h >= 1080:
+                        quality = "1080p"
+                    elif h >= 720:
+                        quality = "720p"
+                    elif h >= 480:
+                        quality = "480p"
+                    else:
+                        quality = f"{h}p"
+                except:
+                    pass
+
+                # Codec
+                codec = track.format or track.codec_id or "Unknown"
+
+                # Bitrate
+                bitrate = "Unknown"
                 if track.bit_rate:
                     try:
                         bitrate = f"{int(track.bit_rate)//1000}kbps"
                     except:
                         pass
 
-                label = " ".join(filter(None, [
-                    track.format or track.codec_id,
-                    f"{width}x{height}",
-                    bitrate
-                ]))
+                # 🔥 Final structured block (IMPORTANT formatting)
+                label = (
+                    f"Quality   : {quality}\n"
+                    f"Resolution: {resolution}\n"
+                    f"Codec     : {codec}"
+                )
+
+                if bitrate != "Unknown":
+                    label += f"\nBitrate   : {bitrate}"
 
                 video_info.append(label)
 
