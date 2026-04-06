@@ -5,7 +5,7 @@ import aiofiles
 import tempfile
 import uuid
 import requests
-import platform
+import pycountry
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -18,8 +18,55 @@ from dreamxbotz.util.file_properties import get_name
 
 logger = logging.getLogger(__name__)
 
+# ======================================
+# 🔥 LANGUAGE FORMATTER (NEW)
+# ======================================
 
-# Telegraph init
+LOCAL_NAMES = {
+    "Bengali": "বাংলা",
+    "Bangla": "বাংলা",
+    "Hindi": "हिन्दी",
+    "Tamil": "தமிழ்",
+    "Telugu": "తెలుగు",
+    "Punjabi": "ਪੰਜਾਬੀ",
+    "Malayalam": "മലയാളം",
+    "Kannada": "ಕನ್ನಡ",
+    "Urdu": "اردو",
+    "Arabic": "العربية",
+    "Chinese": "中文",
+    "Japanese": "日本語",
+    "Korean": "한국어",
+    "Thai": "ไทย"
+}
+
+def fmt_lang(code):
+    if not code:
+        return "Unknown"
+
+    code = str(code).lower()
+
+    try:
+        lang = (
+            pycountry.languages.get(alpha_2=code)
+            or pycountry.languages.get(alpha_3=code)
+        )
+
+        if not lang:
+            return code.upper()
+
+        name = lang.name.replace(" (macrolanguage)", "")
+        local = LOCAL_NAMES.get(name)
+
+        return f"{name} ({local})" if local else name
+
+    except:
+        return code.upper()
+
+
+# ======================================
+# Telegraph init (UNCHANGED)
+# ======================================
+
 TELEGRAPH_ACCESS_TOKEN = os.environ.get("TELEGRAPH_ACCESS_TOKEN") or "38a8ac190ac77ad863fa0c3fa98bdf0bb563fa200211b168062e5313b401"
 if TELEGRAPH_ACCESS_TOKEN:
     telegraph = Telegraph(access_token=TELEGRAPH_ACCESS_TOKEN)
@@ -29,19 +76,6 @@ else:
         telegraph.create_account(short_name="Graduate Movies")
     except Exception:
         logger.exception("Failed to create Telegraph account")
-
-
-def format_track(lang: str | None, title: str | None) -> str:
-    lang = (lang or "").strip()
-    title = (title or "").strip()
-
-    if lang and lang.lower() != "und":
-        return lang
-
-    if title:
-        return title
-
-    return "und"
 
 
 @Client.on_callback_query(filters.regex(r"^extract_data"), group=2)
@@ -110,10 +144,10 @@ async def extract_data_handler(client: Client, query: CallbackQuery):
             async for chunk in client.stream_media(log_msg, limit=chunk_limit):
                 await f.write(chunk)
 
-        #lib_path = os.path.abspath("MediaInfo.dll") if os.path.exists("MediaInfo.dll") else None
+        lib_path = os.path.abspath("MediaInfo.dll") if os.path.exists("MediaInfo.dll") else None
 
         media_info = await asyncio.wait_for(
-            asyncio.to_thread(MediaInfo.parse, temp_path),
+            asyncio.to_thread(MediaInfo.parse, temp_path, library_file=lib_path),
             timeout=6
         )
 
@@ -127,80 +161,116 @@ async def extract_data_handler(client: Client, query: CallbackQuery):
         for track in media_info.tracks:
             ttype = (track.track_type or "").lower()
 
+            # ================= VIDEO =================
             if ttype == "video":
-                codec = track.format or track.codec_id or "Unknown"
                 width = track.width or "?"
                 height = track.height or "?"
-                video_info.append(f"Video: {codec} {width}x{height}")
 
+                bitrate = ""
+                if track.bit_rate:
+                    try:
+                        bitrate = f"{int(track.bit_rate)//1000}kbps"
+                    except:
+                        pass
+
+                label = " ".join(filter(None, [
+                    track.format or track.codec_id,
+                    f"{width}x{height}",
+                    bitrate
+                ]))
+
+                video_info.append(label)
+
+            # ================= AUDIO =================
             elif ttype == "audio":
                 lang = (
                     track.other_language[0]
                     if getattr(track, "other_language", None)
                     else track.language or "und"
                 )
-                key = (lang, track.title)
-                if key not in seen_audio:
-                    seen_audio.add(key)
-                    audio_tracks.append({
-                        "language": lang,
-                        "title": track.title
-                    })
 
+                lang = fmt_lang(lang)
+
+                codec = (track.format or "").replace("E-AC-3", "DDP").replace("AC-3", "DD")
+                channels = track.channel_s or track.channels or ""
+                bitrate = ""
+
+                if channels:
+                    try:
+                        ch = float(channels)
+                        if ch == 6:
+                            channels = "5.1"
+                        elif ch == 2:
+                            channels = "2.0"
+                    except:
+                        pass
+
+                if track.bit_rate:
+                    try:
+                        bitrate = f"{int(track.bit_rate)//1000}kbps"
+                    except:
+                        pass
+
+                details = []
+                if codec:
+                    details.append(f"{codec}{channels}" if channels else codec)
+                if bitrate:
+                    details.append(bitrate)
+
+                label = f"{lang} ~ {' - '.join(details)}" if details else lang
+
+                if label not in seen_audio:
+                    seen_audio.add(label)
+                    audio_tracks.append(label)
+
+            # ================= SUBTITLE =================
             elif ttype in ("text", "subtitle"):
                 lang = (
                     track.other_language[0]
                     if getattr(track, "other_language", None)
                     else track.language or "und"
                 )
-                key = (lang, track.title)
-                if key not in seen_subs:
-                    seen_subs.add(key)
-                    subtitle_tracks.append({
-                        "language": lang,
-                        "title": track.title
-                    })
 
-        page_parts = []
-        page_parts.append("<h3><b>Available Tracks</b></h3><br>")
+                lang = fmt_lang(lang)
+
+                if lang not in seen_subs:
+                    seen_subs.add(lang)
+                    subtitle_tracks.append(lang)
+
+        # ======================================
+        # 🔥 TELEGRAPH UI (BOT A STYLE)
+        # ======================================
+
+        html = "🧾 <b>All Tracks Details</b><hr><br>"
 
         if video_info:
-            page_parts.append("<b>Video Track:</b><br>")
+            html += "🎬 <u><b>Video Track</b></u>"
             for v in video_info:
-                page_parts.append(f"<blockquote>• {v}</blockquote>")
-            page_parts.append("<br>")
+                html += f"<blockquote>• <code>{v}</code></blockquote>"
 
         if audio_tracks:
-            page_parts.append(f"<b>Audio Tracks ({len(audio_tracks)}):</b><br>")
+            html += f"<br>🔊 <u><b>Audio Tracks ({len(audio_tracks)})</b></u>"
             for a in audio_tracks:
-                page_parts.append(
-                    f"<blockquote>• {format_track(a['language'], a['title'])}</blockquote>"
-                )
-            page_parts.append("<br>")
-        else:
-            page_parts.append("<b>Audio Tracks:</b> None<br><br>")
+                html += f"<blockquote>• <code>{a}</code></blockquote>"
 
         if subtitle_tracks:
-            page_parts.append(f"<b>Subtitle Tracks ({len(subtitle_tracks)}):</b><br>")
+            html += f"<br>💬 <u><b>Subtitle Tracks ({len(subtitle_tracks)})</b></u>"
             for s in subtitle_tracks:
-                page_parts.append(
-                    f"<blockquote>• {format_track(s['language'], s['title'])}</blockquote>"
-                )
-            page_parts.append("<br>")
-        else:
-            page_parts.append("<b>Subtitle Tracks:</b> None<br>")
+                html += f"<blockquote>• <code>{s}</code></blockquote>"
 
-        page_parts.append(
-            '<i><code>Join <a href="https://t.me/Graduate_Movies">Graduate Movies</a></code></i>'
-        )
-
-        page_content = "".join(page_parts)
+        html += """
+        <br>
+        <i>
+        🔺 Provided By
+        <b><a href="https://t.me/DreamxBotz">Graduate Movies</a></b> 🔺
+        </i>
+        """
 
         try:
             response = await asyncio.to_thread(
                 telegraph.create_page,
                 title=safe_title[:200],
-                html_content=page_content,
+                html_content=html,
                 author_name="Graduate Movies"
             )
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
@@ -216,7 +286,7 @@ async def extract_data_handler(client: Client, query: CallbackQuery):
                 for btn in row:
                     if btn.callback_data == query.data:
                         new_row.append(
-                            InlineKeyboardButton("📝 ᴠɪᴇᴡ ᴛʀᴀᴄᴋꜱ 📝", url=telegraph_url)
+                            InlineKeyboardButton("📝 ᴠɪᴇᴡ ᴛʀᴀᴄᴋꜱ", url=telegraph_url)
                         )
                     else:
                         new_row.append(btn)
