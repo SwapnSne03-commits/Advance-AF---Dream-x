@@ -242,6 +242,26 @@ async def symbol_fallback_search(chat_id, search):
     # ❌ nothing found
     return [], 0, 0, search
 
+async def send_short_query_warning(message):
+    warn = await message.reply_text(
+        f"<b>{message.from_user.mention},\n"
+        f"ʏᴏᴜʀ ǫᴜᴇʀʏ ɪs ᴛᴏᴏ sʜᴏʀᴛ\n ᴘʟᴇᴀsᴇ ᴀᴅᴅ ʀᴇʟᴇᴀsᴇ ʏᴇᴀʀ ᴏʀ sᴇᴀsᴏɴ ᴡɪᴛʜ ɪᴛ.</b>",
+        parse_mode=enums.ParseMode.HTML
+    )
+
+    async def delete_later():
+        await asyncio.sleep(10)
+        try:
+            await warn.delete()
+        except:
+            pass
+        try:
+            await message.delete()
+        except:
+            pass
+
+    asyncio.create_task(delete_later())
+
 @Client.on_message(filters.group & filters.text & filters.incoming & ~filters.regex(r"^/") )
 async def give_filter(client, message):
     if EMOJI_MODE:
@@ -1989,6 +2009,7 @@ async def auto_filter(client, msg, spoll=False):
                 search = smart_query_cleaner(search)
 
                 if not search:
+                    await send_short_query_warning(message)
                     return
                 m = await message.reply_text(f"<b><i> 𝖲𝖾𝖺𝗋𝖼𝗁𝗂𝗇𝗀 𝖿𝗈𝗋 '{search}' 🔎</i></b>")
                 find = search.split(" ")
@@ -2021,7 +2042,7 @@ async def auto_filter(client, msg, spoll=False):
                 settings = await get_settings(message.chat.id)
                 if not files:
                     if settings.get("spell_check"):
-                        ai_sts = await m.edit('🤖 ᴘʟᴇᴀꜱᴇ ᴡᴀɪᴛ, ᴀɪ ɪꜱ ᴄʜᴇᴄᴋɪɴɢ ʏᴏᴜʀ ꜱᴘᴇʟʟɪɴɢ...')
+                        ai_sts = await m.edit('🕵️‍♂️ ᴀɪ ɪs ғɪxɪɴɢ, ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...')
                         is_misspelled = await ai_spell_check(chat_id=message.chat.id, wrong_name=search)
                         if is_misspelled:
                             await ai_sts.edit(f'✅ Aɪ Sᴜɢɢᴇsᴛᴇᴅ: <code>{is_misspelled}</code>\n🔍 Searching for it...')
