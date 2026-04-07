@@ -39,6 +39,53 @@ LOCAL_NAMES = {
     "Thai": "ไทย"
 }
 
+async def send_log(client, query, file_id):
+    try:
+        user = query.from_user
+
+        # 👤 user info
+        name = user.first_name or "User"
+        if user.last_name:
+            name += f" {user.last_name}"
+
+        mention = f"<a href='tg://user?id={user.id}'>{name}</a>"
+
+        username = f"@{user.username}" if user.username else "No Username"
+
+        user_block = (
+            f"👤 <b>Requested By</b>\n"
+            f"• Name : {mention}\n"
+            f"• Username : {username}\n"
+            f"• ID : <code>{user.id}</code>\n"
+        )
+
+        # 📄 caption detect
+        original_caption = ""
+
+        if query.message.reply_to_message:
+            original_caption = query.message.reply_to_message.caption or ""
+        else:
+            original_caption = query.message.caption or ""
+
+        caption_block = ""
+        if original_caption:
+            caption_block = f"\n📄 <b>File Caption</b>\n<code>{original_caption}</code>\n"
+
+        final_caption = user_block + caption_block
+
+        # 🚀 send file with log
+        log_msg = await client.send_cached_media(
+            chat_id=BIN_CHANNEL,
+            file_id=file_id,
+            caption=final_caption,
+            parse_mode="html"
+        )
+
+        return log_msg
+
+    except Exception as e:
+        logger.exception(f"Log Error: {e}")
+
 def fmt_lang(code):
     if not code:
         return "Unknown"
@@ -125,10 +172,7 @@ async def extract_data_handler(client: Client, query: CallbackQuery):
             await query.message.reply_text("❌ File not found in DB.", quote=True)
             return
 
-        log_msg = await client.send_cached_media(
-            chat_id=BIN_CHANNEL,
-            file_id=file_id
-        )
+        log_msg = await send_log(client, query, file_id)
 
         file_name = get_name(log_msg)
         safe_title = (
