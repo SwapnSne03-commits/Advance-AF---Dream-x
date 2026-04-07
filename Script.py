@@ -138,7 +138,7 @@ Nᴀᴍᴇ - {}
 <b>ᴅɪᴅ ʏᴏᴜ ᴍᴇᴀɴ ᴀɴʏ ᴏɴᴇ ᴏғ ᴛʜᴇsᴇ 👇</b>"""
 
 
-    DEL_MSG = """<b><i>❗️❗️❗️IMPORTANT❗️️❗️❗️</i>\n\nᴛʜɪꜱ ᴍᴏᴠɪᴇ ꜰɪʟᴇ/ᴠɪᴅᴇᴏ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {} 🫥 (ᴅᴜᴇ ᴛᴏ ᴄᴏᴘʏʀɪɢʜᴛ ɪꜱꜱᴜᴇꜱ).\n\nғᴏʀᴡᴀʀᴅ ᴛʜɪꜱ ғɪʟᴇs ᴛo sᴏᴍᴇᴡʜᴇʀᴇ ᴇʟsᴇ ᴀɴᴅ sᴛᴀʀᴛ ᴅᴏᴡɴʟᴏᴀᴅ ᴛʜᴇʀᴇ.</b>"""
+    DEL_MSG = """<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></blockquote>\n\nᴛʜɪꜱ ᴍᴏᴠɪᴇ ꜰɪʟᴇ/ᴠɪᴅᴇᴏ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {} 🫥 (ᴅᴜᴇ ᴛᴏ ᴄᴏᴘʏʀɪɢʜᴛ ɪꜱꜱᴜᴇꜱ).\n\nғᴏʀᴡᴀʀᴅ ᴛʜɪꜱ ғɪʟᴇs ᴛo sᴏᴍᴇᴡʜᴇʀᴇ ᴇʟsᴇ ᴀɴᴅ sᴛᴀʀᴛ ᴅᴏᴡɴʟᴏᴀᴅ ᴛʜᴇʀᴇ.</b>"""
 
 
     I_CUDNT = """<b>sᴏʀʀʏ ɴᴏ ꜰɪʟᴇs ᴡᴇʀᴇ ꜰᴏᴜɴᴅ ꜰᴏʀ ʏᴏᴜʀ ʀᴇǫᴜᴇꜱᴛ {} 😕
@@ -214,14 +214,14 @@ Nᴀᴍᴇ - {}
 Iᴅ : <code>{}</code>
 Nᴀᴍᴇ : {}
 
-Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
+Mᴇꜱꜱᴀɢᴇ : <code>{}</code>"""
     
     CAPTION = """<b>{file_caption}\n\n{metadata}\n━━━━━━━━━━━━━━\n🎭 Cinema Zone ➤\n@Graduate_Movies | @Graduate_Request | @Graduate_Request_Pro\n━━━━━━━━━━━━━━</b>"""
 
     
     MOVIE_UPDATE_NOTIFY_TXT = """
 <blockquote>
-<b><a href="{poster_url}">📬</a> <a href="{imdb_url}">New Files Added</a></b></blockquote>
+<b><a href="{poster_url}">📬</a> <a href="{imdb_url}">NEW FILES ADDED</a></b></blockquote>
 
 🏷️ <b>Tɪᴛʟᴇ :</b> <code>{filename}</code> <b>{tag}</b>
 
