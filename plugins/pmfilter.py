@@ -245,7 +245,7 @@ async def symbol_fallback_search(chat_id, search):
 async def send_short_query_warning(message):
     warn = await message.reply_text(
         f"<b>{message.from_user.mention},\n"
-        f"ʏᴏᴜʀ ǫᴜᴇʀʏ ɪs ᴛᴏᴏ sʜᴏʀᴛ\n ᴘʟᴇᴀsᴇ ᴀᴅᴅ ʀᴇʟᴇᴀsᴇ ʏᴇᴀʀ ᴏʀ sᴇᴀsᴏɴ ᴡɪᴛʜ ɪᴛ.</b>",
+        f"ʏᴏᴜʀ ǫᴜᴇʀʏ ɪs ᴛᴏᴏ sʜᴏʀᴛ.\nᴘʟᴇᴀsᴇ ᴀᴅᴅ ʀᴇʟᴇᴀsᴇ ʏᴇᴀʀ ᴏʀ sᴇᴀsᴏɴ ᴡɪᴛʜ ɪᴛ ᴛᴏ ɢᴇᴛ ʀᴇsᴜʟᴛ.</b>",
         parse_mode=enums.ParseMode.HTML
     )
 
