@@ -55,6 +55,7 @@ CAPTION_LANGUAGES = {
     "urd": "Urdu", "urdu": "Urdu",
     "kor": "Korean", "korean": "Korean",
     "jpn": "Japanese", "japanese": "Japanese",
+    "thai": "Thai", "chinese": "Chinese", "spanish": "Spanish", "span": "Spanish",
 }
 
 OTT_PLATFORMS = {
@@ -62,7 +63,7 @@ OTT_PLATFORMS = {
     "sonyliv": "SonyLiv", "sony": "SonyLiv", "sliv": "SonyLiv",
     "amzn": "Amazon Prime Video", "prime": "Amazon Prime Video", "primevideo": "Amazon Prime Video",
     "hotstar": "Disney+ Hotstar", "zee5": "Zee5",
-    "jio": "JioHotstar", "jhs": "JioHotstar", "dsnp": "Disney",
+    "jio": "JioHotstar", "jhs": "JioHotstar", "dsnp": "Disney", "chorki": "Chorki",
     "aha": "Aha", "hbo": "HBO Max", "paramount": "Paramount+",
     "apple": "Apple TV+", "hoichoi": "Hoichoi", "sunnxt": "Sun NXT", "viki": "Viki"
 }
@@ -778,7 +779,7 @@ def generate_movie_message(movie_doc, base_name):
             epi_block = f"\n\n🔅 Sᴇᴀsᴏɴ : {season_str}\n🔹 Eᴘɪsᴏᴅᴇs :\n{chr(10).join(episode_lines)}"
 
     # Genres
-    genres = movie_doc.get("genres", "N/A")
+    genres = movie_doc.get("genres", "Nᴏ Iᴅᴇᴀ")
 
     text = script.MOVIE_UPDATE_NOTIFY_TXT.format(
         poster_url=movie_doc.get("poster_url", ""),
