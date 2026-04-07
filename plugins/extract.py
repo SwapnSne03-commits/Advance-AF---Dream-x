@@ -48,15 +48,13 @@ async def send_log(client, query, file_id):
         if user.last_name:
             name += f" {user.last_name}"
 
-        mention = f"<a href='tg://user?id={user.id}'>{name}</a>"
-
         username = f"@{user.username}" if user.username else "No Username"
 
         user_block = (
-            f"👤 <b>Requested By</b>\n"
-            f"• Name : {mention}\n"
+            f"👤 Requested By\n"
+            f"• Name : {name}\n"
             f"• Username : {username}\n"
-            f"• ID : <code>{user.id}</code>\n"
+            f"• ID : {user.id}\n"
         )
 
         # 📄 caption detect
@@ -69,7 +67,7 @@ async def send_log(client, query, file_id):
 
         caption_block = ""
         if original_caption:
-            caption_block = f"\n📄 <b>File Caption</b>\n<code>{original_caption}</code>\n"
+            caption_block = f"\n📄 File Caption\n{original_caption}\n"
 
         final_caption = user_block + caption_block
 
@@ -77,14 +75,14 @@ async def send_log(client, query, file_id):
         log_msg = await client.send_cached_media(
             chat_id=BIN_CHANNEL,
             file_id=file_id,
-            caption=final_caption,
-            parse_mode="html"
+            caption=final_caption
         )
 
-        return log_msg
+        return log_msg if log_msg else None
 
     except Exception as e:
         logger.exception(f"Log Error: {e}")
+        return None
 
 def fmt_lang(code):
     if not code:
@@ -187,7 +185,9 @@ async def extract_data_handler(client: Client, query: CallbackQuery):
             .replace("mp4", "")
         )
 
-        media = getattr(log_msg, log_msg.media.value) if log_msg.media else None
+        media = None
+        if log_msg and log_msg.media:
+            media = getattr(log_msg, log_msg.media.value)
         file_size = getattr(media, "file_size", 0) or 0
         chunk_limit = 5 if file_size > 200 * 1024 * 1024 else 4
 
