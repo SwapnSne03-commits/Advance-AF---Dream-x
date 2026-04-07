@@ -330,7 +330,7 @@ async def pm_text(bot, message):
                                        f"<b>#𝐏𝐌_𝐌𝐒𝐆\n\n"
                                        f"👤 Nᴀᴍᴇ : {user}\n"
                                        f"🆔 ID : {user_id}\n"
-                                       f"💬 Mᴇssᴀɢᴇ : {content}</b>"
+                                       f"💬 Mᴇssᴀɢᴇ :</b> <code>{content}</code>"
                                    )
                                    )
     except Exception:
