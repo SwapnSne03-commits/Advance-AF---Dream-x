@@ -691,9 +691,17 @@ async def stream_buttons(user_id: int, file_id: str):
         ]]
 @Client.on_message(filters.command('logs') & filters.user(ADMINS))
 async def log_file(bot, message):
-    """Send log file"""
     try:
-        await message.reply_document('DreamXlogs.txt', caption="📑 **ʟᴏɢꜱ**")
+        # 🔥 ensure logs are written to file
+        for handler in logging.getLogger().handlers:
+            if hasattr(handler, "flush"):
+                handler.flush()
+
+        await message.reply_document(
+            'DreamXlogs.txt',
+            caption="📑 **ʟᴏɢꜱ**"
+        )
+
     except Exception as e:
         await message.reply(str(e))
 
