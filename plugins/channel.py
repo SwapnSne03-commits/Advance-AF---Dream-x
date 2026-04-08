@@ -560,7 +560,9 @@ async def send_movie_update(bot, base_name):
 
                 poster_url = get_safe_poster(movie_doc)
                 resized_poster = await fetch_image(poster_url, size)
-                if not LINK_PREVIEW:
+                # 🔥 FINAL FIX
+                if not LINK_PREVIEW or is_fallback:
+                    # fallback হলে বা preview off হলে → photo
                     msg = await bot.send_photo(
                         chat_id=MOVIE_UPDATE_CHANNEL,
                         photo=resized_poster,
@@ -569,15 +571,19 @@ async def send_movie_update(bot, base_name):
                         parse_mode=enums.ParseMode.HTML
                     )
                     is_photo = True
+
                 else:
+                    # preview case (real poster থাকলে)
                     send_params = {
                         "chat_id": MOVIE_UPDATE_CHANNEL,
                         "text": text,
                         "reply_markup": buttons,
                         "parse_mode": enums.ParseMode.HTML
                     }
-                    if movie_doc.get("poster_url") and LINK_PREVIEW:
+
+                    if movie_doc.get("poster_url"):
                         send_params["invert_media"] = ABOVE_PREVIEW
+
                     msg = await bot.send_message(**send_params)
                     is_photo = False
 
