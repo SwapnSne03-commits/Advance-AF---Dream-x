@@ -324,23 +324,23 @@ def extract_media_info(filename: str, caption: str):
     base_name = re.sub(r'\bx\d+\b', '', base_name, flags=re.IGNORECASE)
     base_name = re.sub(r'\s+', ' ', base_name).strip()
     # 🔥 FIX: same series merge (ignore year)
-    if tag == "#SERIES":
-        base_name = re.sub(r'\b(19|20)\d{2}\b', '', base_name, flags=re.I)
+   # if tag == "#SERIES":
+      #  base_name = re.sub(r'\b(19|20)\d{2}\b', '', base_name, flags=re.I)
 
         # remove season patterns (ALL forms)
-        base_name = re.sub(r'(?<!\w)S\d{1,2}(?!\w)', '', base_name, flags=re.I)
-        base_name = re.sub(r'\bSeason\s*\d{1,2}\b', '', base_name, flags=re.I)
+      #  base_name = re.sub(r'(?<!\w)S\d{1,2}(?!\w)', '', base_name, flags=re.I)
+     #   base_name = re.sub(r'\bSeason\s*\d{1,2}\b', '', base_name, flags=re.I)
 
         # clean spacing
-        base_name = re.sub(r'\s+', ' ', base_name).strip()
+      #  base_name = re.sub(r'\s+', ' ', base_name).strip()
 
     base_name = base_name.strip(" .-_")
 
     base_name = re.sub(r"\s*\(\d{4}\)$", "", base_name).strip()
 
-    if tag == "#SERIES":
-        base_name = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
-    elif year and year not in base_name:
+    #if tag == "#SERIES":
+       # base_name = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
+    if year and year not in base_name:
         base_name += f" {year}"    
     base_name = re.sub(r'\s+', ' ', base_name).strip()
     print("DEBUG:", text_check, is_combined, season, episode)
@@ -462,6 +462,14 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
         db.movie_updates = db.db.movie_updates
 
     movie_doc = await db.movie_updates.find_one({"_id": base_name})
+    # 🔥 TMDB search এর জন্য আলাদা title (with year)
+    search_title = base_name
+
+    if media_info.get("year"):
+        search_title = f"{base_name} {media_info['year']}"
+        # 🔥 remove season remnants just in case
+        search_title = re.sub(r'\bS\d{1,2}\b', '', search_title, flags=re.I)
+        search_title = re.sub(r'\s+', ' ', search_title).strip()
     error_tmdb=False
     file_data = {
         "filename": filename,
