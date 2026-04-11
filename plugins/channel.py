@@ -340,8 +340,10 @@ def extract_media_info(filename: str, caption: str):
 
     #if tag == "#SERIES":
        # base_name = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
-    if year and year not in base_name:
-        base_name += f" {year}"    
+    # 🔥 ensure year always preserved
+    if year:
+        base_name = re.sub(r'\b(19|20)\d{2}\b', '', base_name).strip()
+        base_name = f"{base_name} {year}".strip()
     base_name = re.sub(r'\s+', ' ', base_name).strip()
     print("DEBUG:", text_check, is_combined, season, episode)
     # -------------------------
@@ -402,8 +404,8 @@ def extract_media_info(filename: str, caption: str):
         base_name = normalize(remove_ignored_words(processed_raw)) or filename
 
     # 🔥 RE-CLEAN AFTER FALLBACK
-    base_name = clean_title_advanced(base_name)
-    base_name = _strip_season_episode_tokens(base_name)
+   # base_name = clean_title_advanced(base_name)
+   # base_name = _strip_season_episode_tokens(base_name)
 
     base_name = smart_title(base_name)
 
@@ -491,16 +493,31 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
             if not details or details.get("error") or (not details.get("poster_url") and not details.get("backdrop_url")):
                 error_tmdb=True
                 logger.info("TMDB error switching to IMDB")
-                details = await get_movie_details(base_name) or {}
-        else:
-            details = await get_movie_details(base_name) or {}
+                imdb_query = search_title
+                if media_info.get("year"):
+                    imdb_query = f"{base_name} {media_info['year']}"
 
+                details = await get_movie_details(imdb_query) or {}
+        else:
+            imdb_query = search_title
+            if media_info.get("year"):
+                imdb_query = f"{base_name} {media_info['year']}"
+
+            details = await get_movie_details(imdb_query) or {}
+    
         raw_genres = details.get("genres", "N/A")
         if isinstance(raw_genres, str):
             genre_list = [g.strip() for g in raw_genres.split(",")]
             genres = ", ".join(g for g in genre_list if g in STANDARD_GENRES) or "N/A"
         else:
             genres = ", ".join(g for g in raw_genres if g in STANDARD_GENRES) or "N/A"
+
+        # 🔥 ensure year always exists
+        year_val = media_info.get("year") or details.get("year")
+
+        if not year_val and details.get("release_date"):
+            year_val = str(details.get("release_date"))[:4]
+
         movie_doc = {
             "_id": base_name,
             "files": [file_data],
@@ -508,7 +525,7 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
             "genres": genres,
             "rating": details.get("rating", "N/A"),
             "imdb_url": details.get("url", "")if not TMDB_POSTER or error_tmdb else details.get("tmdb_url"),
-            "year": media_info["year"] or details.get("year"),
+            "year": year_val,
             "tag": media_info["tag"],
             "ott_platform": media_info["ott_platform"],
             "message_id": None,
